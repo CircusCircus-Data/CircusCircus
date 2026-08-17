@@ -6,14 +6,14 @@ from flask_login import current_user, login_required
 from forum.models import Post, Comment, db, error
 
 
-# This Blueprint temporarily contains the comment route.
-rt = Blueprint("routes", __name__)
+# This Blueprint groups all comment-related routes together.
+comments_bp = Blueprint("comments", __name__)
 
 
 # Add a comment to an existing post.
-@rt.route("/action_comment", methods=["POST", "GET"])
+@comments_bp.route("/action_comment", methods=["POST"])
 @login_required
-def comment():
+def add_comment():
     post_id = int(request.args.get("post"))
 
     # Search for the post receiving the comment.
@@ -24,16 +24,19 @@ def comment():
 
     content = request.form["content"]
 
-    # Create the new comment.
+    # Create a new comment with the current date and time.
     new_comment = Comment(
         content,
         datetime.datetime.now(),
     )
 
-    # Connect the comment to its user and post.
+    # Connect the comment to the logged-in user.
     current_user.comments.append(new_comment)
+
+    # Connect the comment to the selected post.
     selected_post.comments.append(new_comment)
 
+    # Save the comment in the database.
     db.session.commit()
 
     return redirect("/viewpost?post=" + str(post_id))
