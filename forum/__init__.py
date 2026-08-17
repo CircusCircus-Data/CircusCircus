@@ -1,3 +1,4 @@
+from forum.posts import posts_bp
 from flask import Flask
 
 from forum.auth import auth_bp
@@ -16,6 +17,7 @@ def create_app():
     # Connect each group of routes to the application.
     app.register_blueprint(rt)
     app.register_blueprint(auth_bp)
+    app.register_blueprint(posts_bp)
 
     # Connect the database to the application.
     from forum.models import db
