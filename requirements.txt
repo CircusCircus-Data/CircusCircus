@@ -9,3 +9,5 @@ SQLAlchemy
 Werkzeug
 wheel
 honcho
+PyMySQL
+python-dotenv
