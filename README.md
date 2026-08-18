@@ -53,3 +53,7 @@ removed version labels from `requirements.txt`
 
 The Heroku file is broken.
 The Procfile is broken too.
+
+![Architecture](Docs/arch.png)
+![User work flow](Docs/user_workflow.png)
+![Database model](Docs/db_model.png)

@@ -17,6 +17,11 @@ class User(UserMixin, db.Model):
     admin = db.Column(db.Boolean, default=False)
     posts = db.relationship("Post", backref="user")
     comments = db.relationship("Comment", backref="user")
+    reactions = db.relationship(
+        "Reaction",
+        backref="user",
+        cascade="all, delete-orphan",
+    )
 
     def __init__(self, email, username, password):
         self.email = email
@@ -30,6 +35,11 @@ class Post(db.Model):
     title = db.Column(db.String(140))
     content = db.Column(db.Text)
     comments = db.relationship("Comment", backref="post")
+    reactions = db.relationship(
+        "Reaction",
+        backref="post",
+        cascade="all, delete-orphan",
+    )
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     subforum_id = db.Column(db.Integer, db.ForeignKey('subforum.id'))
     postdate = db.Column(db.DateTime)
@@ -114,6 +124,40 @@ class Comment(db.Model):
         else:
             self.savedresponce =  "Just a moment ago!"
         return self.savedresponce
+
+class Reaction(db.Model):
+    """Store one user's reaction to one post."""
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    # Store like, dislike, or heart.
+    reaction_type = db.Column(db.String(10), nullable=False)
+
+    # Connect the reaction to its user and post.
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("user.id"),
+        nullable=False,
+    )
+
+    post_id = db.Column(
+        db.Integer,
+        db.ForeignKey("post.id"),
+        nullable=False,
+    )
+
+    # Prevent one user from creating multiple reactions
+    # on the same post.
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id",
+            "post_id",
+            name="unique_user_post_reaction",
+        ),
+    )
+
+    def __init__(self, reaction_type):
+        self.reaction_type = reaction_type    
 
 def error(errormessage):
 	return "<b style=\"color: red;\">" + errormessage + "</b>"
