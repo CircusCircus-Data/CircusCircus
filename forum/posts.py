@@ -6,6 +6,7 @@ from flask_login import current_user, login_required
 from forum.models import (
     Post,
     Comment,
+    Reaction,
     Subforum,
     valid_content,
     valid_title,
@@ -54,6 +55,8 @@ def subforum():
         posts=posts,
         subforums=child_subforums,
         path=subforum_path,
+        reaction_counts={},
+        current_reaction=None,
     )
 
 
@@ -94,11 +97,38 @@ def viewpost():
         .order_by(Comment.id.desc())
     )
 
+    # Begin each reaction total at zero.
+    reaction_counts = {
+        "like": 0,
+        "dislike": 0,
+        "heart": 0,
+    }
+
+    # Count each reaction attached to this post.
+    for reaction in selected_post.reactions:
+        if reaction.reaction_type in reaction_counts:
+            reaction_counts[reaction.reaction_type] += 1
+
+    # Start with no selected reaction.
+    current_reaction = None
+
+    # Find the logged-in user's reaction, if one exists.
+    if current_user.is_authenticated:
+        user_reaction = Reaction.query.filter_by(
+            user_id=current_user.id,
+            post_id=post_id,
+        ).first()
+
+        if user_reaction:
+            current_reaction = user_reaction.reaction_type
+
     return render_template(
         "viewpost.html",
         post=selected_post,
         path=subforum_path,
         comments=comments,
+        reaction_counts=reaction_counts,
+        current_reaction=current_reaction,
     )
 
 
