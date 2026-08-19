@@ -57,3 +57,4 @@ The Procfile is broken too.
 ![Architecture](Docs/arch.png)
 ![User work flow](Docs/user_workflow.png)
 ![Database model](Docs/db_model.png)
+![CircusCircus UML before](Docs/Circuslab_UML_Before.png)

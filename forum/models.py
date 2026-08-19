@@ -150,9 +150,6 @@ class Reaction(db.Model):
     # Add rules that protect the reaction data.
     __table_args__ = (
         # One user can have only one reaction on each post.
-    # Prevent one user from creating multiple reactions
-    # on the same post.
-    __table_args__ = (
         db.UniqueConstraint(
             "user_id",
             "post_id",
@@ -164,7 +161,6 @@ class Reaction(db.Model):
             "reaction_type IN ('like', 'dislike', 'heart')",
             name="valid_reaction_type",
         ),
-    )    
     )
 
     def __init__(self, reaction_type):
@@ -193,4 +189,3 @@ def valid_title(title):
 	return len(title) > 4 and len(title) < 140
 def valid_content(content):
 	return len(content) > 10 and len(content) < 5000
-
