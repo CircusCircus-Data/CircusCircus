@@ -5,6 +5,7 @@ from forum.posts import posts_bp
 from forum.comments import comments_bp
 from forum.settings import settings_bp
 from forum.reactions import reactions_bp
+from forum.messages import messages_bp
 
 def create_app():
     """Create and configure the Flask application."""
@@ -21,6 +22,7 @@ def create_app():
     app.register_blueprint(comments_bp)
     app.register_blueprint(settings_bp)
     app.register_blueprint(reactions_bp)
+    app.register_blueprint(messages_bp)
 
     # Connect the database to the application.
     from forum.models import db
