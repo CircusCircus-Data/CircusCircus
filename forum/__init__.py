@@ -6,6 +6,7 @@ from forum.comments import comments_bp
 from forum.settings import settings_bp
 from forum.reactions import reactions_bp
 from forum.messages import messages_bp
+from forum.formatting import render_markdown
 
 def create_app():
     """Create and configure the Flask application."""
@@ -15,6 +16,9 @@ def create_app():
 
     # Load settings from the Config class.
     app.config.from_object("config.Config")
+
+    # Safely render user-authored Markdown in templates.
+    app.add_template_filter(render_markdown, "markdown")
 
     # Connect each group of routes to the application.
     app.register_blueprint(auth_bp)
