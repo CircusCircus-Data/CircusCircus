@@ -3,6 +3,7 @@ from flask import Flask
 from forum.auth import auth_bp
 from forum.posts import posts_bp
 from forum.comments import comments_bp
+from forum.reactions import reactions_bp
 
 
 def create_app():
@@ -18,6 +19,7 @@ def create_app():
     app.register_blueprint(auth_bp)
     app.register_blueprint(posts_bp)
     app.register_blueprint(comments_bp)
+    app.register_blueprint(reactions_bp)
 
     # Connect the database to the application.
     from forum.models import db

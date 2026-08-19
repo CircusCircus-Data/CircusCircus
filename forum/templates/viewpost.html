@@ -15,6 +15,69 @@
 	</div>
 	<div class="postcontent">
 		{{post.content}}
+		<!-- Display the post's emoji reactions. -->
+<div class="post-reactions">
+    <h4>Reactions</h4>
+
+    <!-- Everyone can see the reaction totals. -->
+    <p>
+        👍 Like: {{ reaction_counts["like"] }}
+        |
+        👎 Dislike: {{ reaction_counts["dislike"] }}
+        |
+        ❤️ Heart: {{ reaction_counts["heart"] }}
+    </p>
+
+    {% if current_user.is_authenticated %}
+
+        <!-- Like button -->
+        <form action="/action_reaction" method="POST" style="display: inline;">
+            <input type="hidden" name="post_id" value="{{ post.id }}">
+            <input type="hidden" name="reaction_type" value="like">
+
+            <button type="submit">
+                👍 Like
+                {% if current_reaction == "like" %}
+                    ✓
+                {% endif %}
+            </button>
+        </form>
+
+        <!-- Dislike button -->
+        <form action="/action_reaction" method="POST" style="display: inline;">
+            <input type="hidden" name="post_id" value="{{ post.id }}">
+            <input type="hidden" name="reaction_type" value="dislike">
+
+            <button type="submit">
+                👎 Dislike
+                {% if current_reaction == "dislike" %}
+                    ✓
+                {% endif %}
+            </button>
+        </form>
+
+        <!-- Heart button -->
+        <form action="/action_reaction" method="POST" style="display: inline;">
+            <input type="hidden" name="post_id" value="{{ post.id }}">
+            <input type="hidden" name="reaction_type" value="heart">
+
+            <button type="submit">
+                ❤️ Heart
+                {% if current_reaction == "heart" %}
+                    ✓
+                {% endif %}
+            </button>
+        </form>
+
+        {% if current_reaction %}
+            <p>Your current reaction: {{ current_reaction }}</p>
+            <p>Click the same reaction again to remove it.</p>
+        {% endif %}
+
+    {% else %}
+        <p>Log in or create an account to react to this post.</p>
+    {% endif %}
+</div>
 	</div>
 
 </div>
