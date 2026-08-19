@@ -9,6 +9,7 @@ import re
 
 password_regex = re.compile("^[a-zA-Z0-9!@#%&]{6,40}$")
 username_regex = re.compile("^[a-zA-Z0-9!@#%&]{4,40}$")
+email_regex = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 #Account checks
 def valid_username(username):
 	if not username_regex.match(username):
@@ -18,6 +19,9 @@ def valid_username(username):
 	return True
 def valid_password(password):
 	return password_regex.match(password)
+
+def valid_email(email):
+	return email_regex.fullmatch(email)
 
 def username_taken(username):
 	return User.query.filter(User.username == username).first()
