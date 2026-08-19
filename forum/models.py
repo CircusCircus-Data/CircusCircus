@@ -140,21 +140,28 @@ class Reaction(db.Model):
         nullable=False,
     )
 
+    # Connect the reaction to its post.
     post_id = db.Column(
         db.Integer,
         db.ForeignKey("post.id"),
         nullable=False,
     )
 
-    # Prevent one user from creating multiple reactions
-    # on the same post.
+    # Add rules that protect the reaction data.
     __table_args__ = (
+        # One user can have only one reaction on each post.
         db.UniqueConstraint(
             "user_id",
             "post_id",
             name="unique_user_post_reaction",
         ),
-    )
+
+        # Only these three reaction types are accepted.
+        db.CheckConstraint(
+            "reaction_type IN ('like', 'dislike', 'heart')",
+            name="valid_reaction_type",
+        ),
+    )    
 
     def __init__(self, reaction_type):
         self.reaction_type = reaction_type    
