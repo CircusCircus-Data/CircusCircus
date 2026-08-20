@@ -1,0 +1,24 @@
+<div class="footer-grid">
+	<div class="footer-brand">
+		<span class="footer-kicker">Sound Laboratories presents</span>
+		<strong>Sound Lab</strong>
+		<p>Independent conversation for people making culture in every frequency.</p>
+	</div>
+
+	<div class="footer-channel">
+		<span class="footer-label">Channels</span>
+		<a href="/">Forum index</a>
+		{% if current_user.is_authenticated %}
+		<a href="/messages/">Messages</a>
+		<a href="/settings">Account settings</a>
+		{% else %}
+		<a href="/loginform">Join the community</a>
+		{% endif %}
+	</div>
+
+	<div class="footer-meta">
+		<span>Music / Technology / Fashion / Culture</span>
+		<span>Open signal. Shared interests.</span>
+		<span>&copy; {{ current_year|default(2026) }} Sound Laboratories</span>
+	</div>
+</div>
