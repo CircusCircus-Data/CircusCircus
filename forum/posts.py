@@ -1,6 +1,6 @@
 import datetime
 
-from flask import Blueprint, render_template, request, redirect
+from flask import Blueprint, abort, render_template, request, redirect
 from flask_login import current_user, login_required
 
 from forum.models import (
@@ -33,13 +33,13 @@ def subforum():
     if not selected_subforum:
         return error("That subforum does not exist!")
 
-    # Get the 50 newest posts from this subforum.
-    posts = (
-        Post.query
-        .filter(Post.subforum_id == subforum_id)
-        .order_by(Post.id.desc())
-        .limit(50)
-    )
+    # Logged-out visitors may only discover public posts. Authenticated users
+    # may also see private posts, as defined by the forum's visibility policy.
+    posts_query = Post.query.filter(Post.subforum_id == subforum_id)
+    if not current_user.is_authenticated:
+        posts_query = posts_query.filter(Post.visibility == "public")
+
+    posts = posts_query.order_by(Post.id.desc()).limit(50)
 
     # Create the navigation path shown above the posts.
     subforum_path = generateLinkPath(selected_subforum.id)
@@ -88,6 +88,14 @@ def viewpost():
 
     if not selected_post:
         return error("That post does not exist!")
+
+    # Return 404 so logged-out visitors cannot use direct URLs to discover
+    # whether a private post exists.
+    if (
+        selected_post.visibility == "private"
+        and not current_user.is_authenticated
+    ):
+        abort(404)
 
     subforum_path = generateLinkPath(selected_post.subforum.id)
 
@@ -147,6 +155,7 @@ def action_post():
 
     title = request.form["title"]
     content = request.form["content"]
+    visibility = request.form.get("visibility", "public")
 
     # Store any validation errors inside this list.
     errors = []
@@ -161,12 +170,16 @@ def action_post():
             "Post must be between 10 and 5000 characters long!"
         )
 
+    if visibility not in {"public", "private"}:
+        errors.append("Post visibility must be Public or Private!")
+
     # Redisplay the form if any information is invalid.
     if errors:
         return render_template(
             "createpost.html",
             subforum=selected_subforum,
             errors=errors,
+            selected_visibility=visibility,
         )
 
     # Create and connect the new post.
@@ -174,6 +187,7 @@ def action_post():
         title,
         content,
         datetime.datetime.now(),
+        visibility,
     )
 
     selected_subforum.posts.append(new_post)
