@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 {% block body %}
 <div class="message-header">
-	<a href="{{ url_for('messages.inbox') }}">&larr; Inbox</a>
+	<a class="btn btn-default btn-sm" href="{{ url_for('messages.inbox') }}">&larr; Inbox</a>
 	<h2>Conversation with {{ other_user.username }}</h2>
 </div>
 
@@ -13,13 +13,16 @@
 		<div class="message-time">{{ message.sent_at.strftime('%b %d, %Y at %I:%M %p') }}</div>
 	</div>
 	{% else %}
-	<p>No messages yet. Start the conversation below.</p>
+	<p class="alert alert-info">No messages yet. Start the conversation below.</p>
 	{% endfor %}
 </div>
 
 <form class="message-compose" action="{{ url_for('messages.send_message') }}" method="post">
 	<input type="hidden" name="recipient_id" value="{{ other_user.id }}">
-	<textarea class="inputbox" name="content" rows="4" maxlength="5000" required placeholder="Write a message..."></textarea>
-	<button type="submit">Send</button>
+	<div class="form-group">
+		<label class="sr-only" for="message_content">Write a message</label>
+		<textarea class="inputbox form-control" id="message_content" name="content" rows="4" maxlength="5000" required placeholder="Write a message..."></textarea>
+	</div>
+	<button class="btn btn-primary" type="submit">Send message</button>
 </form>
 {% endblock %}

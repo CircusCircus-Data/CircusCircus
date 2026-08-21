@@ -10,14 +10,18 @@
 </head>
 <body>
 	<a class="skip-link" href="#main-content">Skip to content</a>
-	<div class="site-shell">
+	<div class="site-shell editorial-shell">
 	<header class="site-header">
 		{% include 'header.html' %}
 	</header>
 
-	<div class="page">
+	<div class="editorial-frame">
+	<aside class="control-sidebar">
+		{% include 'sidebar.html' %}
+	</aside>
+	<div class="page container-fluid">
 	{% if errors %}
-	<div class="errors" role="alert">
+	<div class="errors alert alert-danger" role="alert">
 	{% for error in errors %}
 		<p class="error">
 			{{ error }}
@@ -29,6 +33,7 @@
 	<main class="content" id="main-content">
 		{% block body %}{% endblock %}
 	</main>
+	</div>
 	</div>
 
 	<footer class="site-footer">
