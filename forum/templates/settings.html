@@ -1,31 +1,35 @@
 {% extends 'layout.html' %}
 {% block body %}
 
-<div class="loginbox">
+<div class="loginbox panel panel-default">
 	<h3>Account Settings</h3>
 	{% if success_message %}
-	<p>{{ success_message }}</p>
+	<p class="alert alert-success" role="status">{{ success_message }}</p>
 	{% endif %}
 	<form action="/action_settings" method="POST">
-		<label for="username">Username</label><br>
+		<div class="form-group">
+		<label for="username">Username</label>
 		<input
-			class="loginelement"
+			class="loginelement form-control"
 			id="username"
 			name="username"
 			type="text"
 			value="{{ submitted_username|default(current_user.username) }}"
-		><br>
+		>
+		</div>
 
-		<label for="email">Email</label><br>
+		<div class="form-group">
+		<label for="email">Email</label>
 		<input
-			class="loginelement"
+			class="loginelement form-control"
 			id="email"
 			name="email"
 			type="email"
 			value="{{ submitted_email|default(current_user.email) }}"
-		><br>
+		>
+		</div>
 
-		<input class="loginelement" type="submit" value="Save Settings">
+		<input class="loginelement btn btn-primary btn-block" type="submit" value="Save Settings">
 	</form>
 </div>
 
