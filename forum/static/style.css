@@ -111,8 +111,9 @@ a:focus{
 	padding: 1.5rem 0 1.25rem;
 }
 .brand-lockup{
+	position: relative;
 	display: flex;
-	align-items: flex-start;
+	align-items: flex-end;
 	width: max-content;
 	color: var(--ink);
 	text-decoration: none;
@@ -123,23 +124,50 @@ a:focus{
 	text-decoration: none;
 }
 .brand-name{
-	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
-	font-size: clamp(4.5rem, 11vw, 9.5rem);
-	font-weight: 900;
-	letter-spacing: -0.055em;
-	line-height: 0.74;
-	text-transform: uppercase;
+	position: relative;
+	display: block;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+	font-size: clamp(4.1rem, 10.5vw, 9rem);
+	font-weight: 800;
+	letter-spacing: -0.095em;
+	line-height: 0.7;
+	transform: scaleX(0.91);
+	transform-origin: left bottom;
+}
+.brand-name::before,
+.brand-name::after{
+	content: attr(data-text);
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+.brand-name::before{
+	clip-path: inset(24% 0 54% 0);
+	color: var(--violet);
+	transform: translateX(-0.035em) skewX(-5deg);
+	mix-blend-mode: multiply;
+	animation: wordmark-shift 5s steps(1, end) infinite;
+}
+.brand-name::after{
+	clip-path: inset(63% 0 17% 0);
+	color: var(--ink);
+	transform: translateX(0.025em) scaleX(1.015);
 }
 .brand-studio{
-	margin-left: 0.6rem;
-	padding: 0.25rem 0.45rem;
-	background: var(--violet);
-	color: white;
-	font-size: 0.68rem;
-	font-weight: 800;
-	letter-spacing: 0.14em;
-	text-transform: uppercase;
-	transform: rotate(3deg);
+	position: absolute;
+	right: 0.2rem;
+	bottom: -1.7rem;
+	padding: 0.24rem 0.55rem;
+	border: 2px solid var(--ink);
+	background: var(--signal);
+	color: var(--ink);
+	font-family: "Courier New", monospace;
+	font-size: 0.78rem;
+	font-weight: bold;
+	letter-spacing: 0.12em;
+	line-height: 1;
+	text-transform: lowercase;
+	transform: rotate(-1deg);
 }
 .brand-manifesto{
 	margin: 0.8rem 0 0;
@@ -349,17 +377,56 @@ a:focus{
 	letter-spacing: 0.14em;
 	text-transform: uppercase;
 }
-.footer-brand strong{
+.footer-lockup{
+	position: relative;
+	display: inline-block;
+}
+.footer-wordmark{
+	position: relative;
 	display: block;
-	font-family: Impact, Haettenschweiler, "Arial Narrow Bold", sans-serif;
+	font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
 	font-size: clamp(2.5rem, 6vw, 5rem);
-	letter-spacing: -0.04em;
-	line-height: 0.85;
-	text-transform: uppercase;
+	font-weight: 800;
+	letter-spacing: -0.095em;
+	line-height: 0.75;
+	transform: scaleX(0.91);
+	transform-origin: left bottom;
+}
+.footer-wordmark::before,
+.footer-wordmark::after{
+	content: attr(data-text);
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+}
+.footer-wordmark::before{
+	clip-path: inset(24% 0 54% 0);
+	color: var(--violet);
+	transform: translateX(-0.035em) skewX(-5deg);
+}
+.footer-wordmark::after{
+	clip-path: inset(63% 0 17% 0);
+	color: var(--paper);
+	transform: translateX(0.025em) scaleX(1.015);
+}
+.footer-studio{
+	position: absolute;
+	right: 0;
+	bottom: -1.35rem;
+	padding: 0.18rem 0.45rem;
+	border: 1px solid var(--paper);
+	background: var(--signal);
+	color: var(--ink);
+	font-family: "Courier New", monospace;
+	font-size: 0.65rem;
+	font-weight: bold;
+	letter-spacing: 0.12em;
+	line-height: 1;
+	transform: rotate(-1deg);
 }
 .footer-brand p{
 	max-width: 34rem;
-	margin: 1rem 0 0;
+	margin: 2rem 0 0;
 	font-size: 0.9rem;
 }
 .footer-channel,
@@ -433,6 +500,11 @@ a:focus{
 @keyframes transmission-pulse{
 	0%, 20%{ background: var(--signal); }
 	21%, 100%{ background: #333; }
+}
+@keyframes wordmark-shift{
+	0%, 91%, 100%{ transform: translateX(-0.035em) skewX(-5deg); }
+	92%{ transform: translateX(0.025em) skewX(3deg); }
+	95%{ transform: translateX(-0.065em) skewX(-7deg); }
 }
 
 /* Shared arcade interface components */
@@ -964,7 +1036,7 @@ select:focus{
 		gap: 1.5rem;
 	}
 	.brand-name{
-		font-size: clamp(3.8rem, 20vw, 7rem);
+		font-size: clamp(3.5rem, 18.5vw, 6.5rem);
 	}
 	.site-nav{
 		flex-wrap: wrap;
