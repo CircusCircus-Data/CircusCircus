@@ -1,17 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename="bootstrap.min.css")}}">
-	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename="style.css")}}">
-	<title>{{ config.SITE_NAME }}</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Sound Lab is a forum for musicians exploring music, technology, fashion, and culture.">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='bootstrap.min.css') }}">
+	<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+	<title>{% block title %}{{ config.SITE_NAME|default('Sound Lab') }}{% endblock %}</title>
 </head>
 <body>
-<div class="page">
-	<div class="header">
+	<a class="skip-link" href="#main-content">Skip to content</a>
+	<div class="site-shell">
+	<header class="site-header">
 		{% include 'header.html' %}
-	</div>
+	</header>
+
+	<div class="page">
 	{% if errors %}
-	<div class="errors">
+	<div class="errors" role="alert">
 	{% for error in errors %}
 		<p class="error">
 			{{ error }}
@@ -20,11 +26,14 @@
 	{% endfor %}
 	</div>
 {% endif %}
-	<div class="content">
+	<main class="content" id="main-content">
 		{% block body %}{% endblock %}
+	</main>
 	</div>
+
+	<footer class="site-footer">
+		{% include 'footer.html' %}
+	</footer>
 </div>
 </body>
-
-
 </html>

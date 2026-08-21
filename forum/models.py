@@ -34,6 +34,12 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(140))
     content = db.Column(db.Text)
+    visibility = db.Column(
+        db.String(10),
+        nullable=False,
+        default="public",
+        server_default="public",
+    )
     comments = db.relationship("Comment", backref="post")
     reactions = db.relationship(
         "Reaction",
@@ -44,13 +50,21 @@ class Post(db.Model):
     subforum_id = db.Column(db.Integer, db.ForeignKey('subforum.id'))
     postdate = db.Column(db.DateTime)
 
+    __table_args__ = (
+        db.CheckConstraint(
+            "visibility IN ('public', 'private')",
+            name="valid_post_visibility",
+        ),
+    )
+
     #cache stuff
     lastcheck = None
     savedresponce = None
-    def __init__(self, title, content, postdate):
+    def __init__(self, title, content, postdate, visibility="public"):
         self.title = title
         self.content = content
         self.postdate = postdate
+        self.visibility = visibility
     def get_time_string(self):
         #this only needs to be calculated every so often, not for every request
         #this can be a rudamentary chache

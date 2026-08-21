@@ -14,7 +14,7 @@
 		</div>
 	</div>
 	<div class="postcontent">
-		{{post.content}}
+		{{ post.content|markdown }}
 		<!-- Display the post's emoji reactions. -->
 <div class="post-reactions">
     <h4>Reactions</h4>
@@ -136,5 +136,4 @@ function toggle(){
 
 
 {% endblock %}
-
 

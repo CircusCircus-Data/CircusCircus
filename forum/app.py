@@ -6,8 +6,8 @@ from forum.models import Subforum, db, User
 from . import create_app
 app = create_app()
 
-app.config['SITE_NAME'] = 'Schooner'
-app.config['SITE_DESCRIPTION'] = 'a schooner forum'
+app.config['SITE_NAME'] = 'Sound Lab'
+app.config['SITE_DESCRIPTION'] = 'Music, technology, fashion, and culture.'
 app.config['FLASK_DEBUG'] = 1
 
 def init_site():
@@ -51,7 +51,6 @@ with app.app_context():
 def index():
 	subforums = Subforum.query.filter(Subforum.parent_id == None).order_by(Subforum.id)
 	return render_template("subforums.html", subforums=subforums)
-
 
 
 
