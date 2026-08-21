@@ -34,6 +34,8 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(140))
     content = db.Column(db.Text)
+    image_url = db.Column(db.String(2048))
+    video_url = db.Column(db.String(2048))
     visibility = db.Column(
         db.String(10),
         nullable=False,
@@ -60,11 +62,21 @@ class Post(db.Model):
     #cache stuff
     lastcheck = None
     savedresponce = None
-    def __init__(self, title, content, postdate, visibility="public"):
+    def __init__(
+        self,
+        title,
+        content,
+        postdate,
+        visibility="public",
+        image_url=None,
+        video_url=None,
+    ):
         self.title = title
         self.content = content
         self.postdate = postdate
         self.visibility = visibility
+        self.image_url = image_url
+        self.video_url = video_url
     def get_time_string(self):
         #this only needs to be calculated every so often, not for every request
         #this can be a rudamentary chache

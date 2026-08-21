@@ -14,6 +14,7 @@ from forum.models import (
     generateLinkPath,
     error,
 )
+from forum.media import valid_image_url, valid_video_url, video_embed_url
 
 
 # This Blueprint groups all post-related routes together.
@@ -137,6 +138,7 @@ def viewpost():
         comments=comments,
         reaction_counts=reaction_counts,
         current_reaction=current_reaction,
+        video_embed_url=video_embed_url(selected_post.video_url),
     )
 
 
@@ -156,6 +158,8 @@ def action_post():
     title = request.form["title"]
     content = request.form["content"]
     visibility = request.form.get("visibility", "public")
+    image_url = request.form.get("image_url", "").strip()
+    video_url = request.form.get("video_url", "").strip()
 
     # Store any validation errors inside this list.
     errors = []
@@ -173,6 +177,14 @@ def action_post():
     if visibility not in {"public", "private"}:
         errors.append("Post visibility must be Public or Private!")
 
+    if not valid_image_url(image_url):
+        errors.append(
+            "Image must be an HTTPS link ending in JPG, JPEG, PNG, GIF, or WEBP."
+        )
+
+    if not valid_video_url(video_url):
+        errors.append("Video must be a valid HTTPS YouTube or Vimeo link.")
+
     # Redisplay the form if any information is invalid.
     if errors:
         return render_template(
@@ -180,6 +192,10 @@ def action_post():
             subforum=selected_subforum,
             errors=errors,
             selected_visibility=visibility,
+            submitted_title=title,
+            submitted_content=content,
+            submitted_image_url=image_url,
+            submitted_video_url=video_url,
         )
 
     # Create and connect the new post.
@@ -188,6 +204,8 @@ def action_post():
         content,
         datetime.datetime.now(),
         visibility,
+        image_url or None,
+        video_url or None,
     )
 
     selected_subforum.posts.append(new_post)

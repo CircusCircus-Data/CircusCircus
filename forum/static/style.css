@@ -1084,3 +1084,27 @@ select:focus{
 		animation: none !important;
 	}
 }
+
+/* Keep post images and allowlisted video embeds inside the content column. */
+.post-media {
+	margin: 1rem auto;
+	max-width: 960px;
+	width: 100%;
+}
+
+.post-media img {
+	display: block;
+	height: auto;
+	max-width: 100%;
+	object-fit: contain;
+}
+
+.video-embed {
+	aspect-ratio: 16 / 9;
+}
+
+.video-embed iframe {
+	border: 0;
+	height: 100%;
+	width: 100%;
+}

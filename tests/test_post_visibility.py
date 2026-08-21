@@ -112,6 +112,45 @@ class PostVisibilityTests(unittest.TestCase):
         post = Post("Default post", "Default post content", datetime.datetime.now())
         self.assertEqual(post.visibility, "public")
 
+    def test_valid_media_links_are_saved_and_rendered(self):
+        self.log_in()
+        response = self.client.post(
+            f"/action_post?sub={self.subforum_id}",
+            data={
+                "title": "Post with media",
+                "content": "Enough content for a post with media.",
+                "visibility": "public",
+                "image_url": "https://cdn.example.com/photo.webp",
+                "video_url": "https://youtu.be/dQw4w9WgXcQ",
+            },
+            follow_redirects=True,
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'https://cdn.example.com/photo.webp', response.data)
+        self.assertIn(
+            b'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ',
+            response.data,
+        )
+        self.assertIn(b'class="post-media video-embed"', response.data)
+
+    def test_invalid_media_links_do_not_create_post(self):
+        self.log_in()
+        response = self.client.post(
+            f"/action_post?sub={self.subforum_id}",
+            data={
+                "title": "Rejected media post",
+                "content": "Enough content for an invalid media post.",
+                "visibility": "public",
+                "image_url": "javascript:alert(1)",
+                "video_url": "https://unsupported.example/video/1",
+            },
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b"Image must be an HTTPS link", response.data)
+        self.assertIn(b"Video must be a valid HTTPS YouTube or Vimeo link", response.data)
+        with self.app.app_context():
+            self.assertIsNone(Post.query.filter_by(title="Rejected media post").first())
+
 
 if __name__ == "__main__":
     unittest.main()
