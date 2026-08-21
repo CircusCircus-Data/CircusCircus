@@ -34,6 +34,12 @@ class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(140))
     content = db.Column(db.Text)
+    visibility = db.Column(
+        db.String(10),
+        nullable=False,
+        default="public",
+        server_default="public",
+    )
     comments = db.relationship("Comment", backref="post")
     reactions = db.relationship(
         "Reaction",
@@ -44,13 +50,21 @@ class Post(db.Model):
     subforum_id = db.Column(db.Integer, db.ForeignKey('subforum.id'))
     postdate = db.Column(db.DateTime)
 
+    __table_args__ = (
+        db.CheckConstraint(
+            "visibility IN ('public', 'private')",
+            name="valid_post_visibility",
+        ),
+    )
+
     #cache stuff
     lastcheck = None
     savedresponce = None
-    def __init__(self, title, content, postdate):
+    def __init__(self, title, content, postdate, visibility="public"):
         self.title = title
         self.content = content
         self.postdate = postdate
+        self.visibility = visibility
     def get_time_string(self):
         #this only needs to be calculated every so often, not for every request
         #this can be a rudamentary chache
@@ -140,19 +154,26 @@ class Reaction(db.Model):
         nullable=False,
     )
 
+    # Connect the reaction to its post.
     post_id = db.Column(
         db.Integer,
         db.ForeignKey("post.id"),
         nullable=False,
     )
 
-    # Prevent one user from creating multiple reactions
-    # on the same post.
+    # Add rules that protect the reaction data.
     __table_args__ = (
+        # One user can have only one reaction on each post.
         db.UniqueConstraint(
             "user_id",
             "post_id",
             name="unique_user_post_reaction",
+        ),
+
+        # Only these three reaction types are accepted.
+        db.CheckConstraint(
+            "reaction_type IN ('like', 'dislike', 'heart')",
+            name="valid_reaction_type",
         ),
     )
 
@@ -182,4 +203,3 @@ def valid_title(title):
 	return len(title) > 4 and len(title) < 140
 def valid_content(content):
 	return len(content) > 10 and len(content) < 5000
-
