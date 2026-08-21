@@ -1,18 +1,23 @@
 {% extends 'layout.html' %}
 {% block body%}
-<div class="toplevelinfo">
-	Top level subforums:
+<section class="broadcast-hero">
+	<div class="hero-copy">
+		<span class="section-kicker">Welcome to Sound Lab</span>
+		<h1>Where culture meets conversation.</h1>
+		<p>A shared frequency for musicians talking sound, technology, fashion, process, and everything between.</p>
+	</div>
+</section>
+<div class="directory-heading">
+	<div><span class="section-kicker">Community channels</span><h2>Browse discussions</h2></div>
+	<p>Choose a channel and tune into the conversation.</p>
 </div>
+<div class="channel-grid">
 {% for subforum in subforums %}
-<div class="subforumlisting">
-<div class="subforumtitle">
-<a href="/subforum?sub={{ subforum.id }}">
-{{ subforum.title}}
-</a>
-</div>
-<div class="subforumdesc">
-{{ subforum.description }}
-</div>
-</div>
+<article class="subforumlisting channel-card">
+	<div class="subforumtitle"><a href="/subforum?sub={{ subforum.id }}">{{ subforum.title}}</a></div>
+	<div class="subforumdesc">{{ subforum.description }}</div>
+	<a class="channel-enter" href="/subforum?sub={{ subforum.id }}">Enter channel <span>→</span></a>
+</article>
 {% endfor %}
+</div>
 {% endblock %}

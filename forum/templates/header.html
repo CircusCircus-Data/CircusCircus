@@ -1,45 +1,21 @@
-<div class="signal-bar" aria-label="Sound Lab broadcast status">
-	<span class="signal-status"><span class="signal-dot" aria-hidden="true"></span> Live community signal</span>
-	<div class="signal-ticker" aria-hidden="true">
-		<span>Music + Technology + Fashion + Culture + Sound Lab Studio + Community Frequency + </span>
-	</div>
-	<span class="signal-code">SL / NYC / 001</span>
-</div>
-
-<div class="brand-row">
-	<a class="brand-lockup" href="/" aria-label="Sound Lab home">
-		<span class="brand-name" data-text="sound lab" aria-hidden="true">sound lab</span>
+<div class="editorial-header">
+	<a class="compact-lockup editorial-wordmark" href="/" aria-label="Sound Lab Studio home">
+		<span class="brand-name" data-text="sound lab">sound lab</span>
 		<span class="brand-studio">Studio</span>
 	</a>
-	<div class="broadcast-console">
-		<div class="console-heading">
-			<span>Channel 01</span>
-			<span>On air</span>
-		</div>
-		<div class="pixel-display" aria-label="Animated Sound Lab audio signal">
-			<div class="pixel-disc" aria-hidden="true"><span></span></div>
-			<div class="pixel-equalizer" aria-hidden="true">
-				<span></span><span></span><span></span><span></span><span></span>
-				<span></span><span></span><span></span><span></span><span></span>
-			</div>
-		</div>
-		<div class="console-sequence" aria-hidden="true">
-			<span></span><span></span><span></span><span></span>
-			<span></span><span></span><span></span><span></span>
-		</div>
-		<p class="brand-manifesto">Musicians talking music, tech, fashion &amp; everything between.</p>
+	<div class="header-frequency" aria-label="Sound Lab live broadcast">
+		<span class="signal-dot" aria-hidden="true"></span>
+		<div class="frequency-copy"><strong>Live community signal</strong><span>Music · Technology · Fashion · Culture</span></div>
+		<div class="mini-equalizer" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+	</div>
+	<div class="header-account">
+		{% if current_user.is_authenticated %}
+		<a class="header-cta" href="/">+ Start a discussion</a>
+		<a class="account-chip" href="/settings"><span>{{ current_user.username[0]|upper }}</span>@{{ current_user.username }}</a>
+		{% else %}
+		<a class="header-cta" href="/loginform">Join the frequency</a>
+		<span class="account-chip"><span>G</span>Guest</span>
+		{% endif %}
 	</div>
 </div>
-
-<nav class="site-nav" aria-label="Main navigation">
-	<a href="/">Forum</a>
-	{% if current_user.is_authenticated %}
-	<a href="/messages/">Messages</a>
-	<a href="/settings">Settings</a>
-	<span class="nav-identity{% if current_user.admin %} admin{% endif %}">@{{ current_user.username }}</span>
-	<a class="nav-action" href="/action_logout">Log out</a>
-	{% else %}
-	<span class="nav-identity">Guest frequency</span>
-	<a class="nav-action" href="/loginform">Log in / Join</a>
-	{% endif %}
-</nav>
+<div class="station-ticker" aria-hidden="true"><span>NOW TRANSMITTING  ·  SOUND LAB STUDIO  ·  OPEN SIGNAL  ·  MUSIC / TECHNOLOGY / FASHION / CULTURE  ·  COMMUNITY FREQUENCY  ·  </span></div>
