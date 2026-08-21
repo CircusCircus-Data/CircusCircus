@@ -15,6 +15,18 @@
 	</div>
 	<div class="postcontent">
 		{{ post.content|markdown }}
+		{% if post.image_url %}
+		<div class="post-media">
+			<img src="{{ post.image_url }}" alt="Image attached to {{ post.title }}" loading="lazy">
+		</div>
+		{% endif %}
+		{% if video_embed_url %}
+		<div class="post-media video-embed">
+			<iframe src="{{ video_embed_url }}" title="Video attached to {{ post.title }}"
+				loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+				allowfullscreen></iframe>
+		</div>
+		{% endif %}
 		<!-- Display the post's emoji reactions. -->
 <div class="post-reactions">
     <h4>Reactions</h4>
@@ -136,4 +148,3 @@ function toggle(){
 
 
 {% endblock %}
-
