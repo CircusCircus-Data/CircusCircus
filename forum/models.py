@@ -15,8 +15,16 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(255))
     email = db.Column(db.String(255), unique=True)
     admin = db.Column(db.Boolean, default=False)
-    posts = db.relationship("Post", backref="user")
-    comments = db.relationship("Comment", backref="user")
+    posts = db.relationship(
+        "Post",
+        backref="user",
+        cascade="all, delete-orphan",
+    )
+    comments = db.relationship(
+        "Comment",
+        backref="user",
+        cascade="all, delete-orphan",
+    )
     reactions = db.relationship(
         "Reaction",
         backref="user",
@@ -29,6 +37,11 @@ class User(UserMixin, db.Model):
         self.password_hash = generate_password_hash(password)
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+    def set_password(self, password):
+        """Replace the user's password with a securely generated hash."""
+
+        self.password_hash = generate_password_hash(password)
     
 class Post(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -42,7 +55,11 @@ class Post(db.Model):
         default="public",
         server_default="public",
     )
-    comments = db.relationship("Comment", backref="post")
+    comments = db.relationship(
+        "Comment",
+        backref="post",
+        cascade="all, delete-orphan",
+    )
     reactions = db.relationship(
         "Reaction",
         backref="post",
@@ -215,3 +232,9 @@ def valid_title(title):
 	return len(title) > 4 and len(title) < 140
 def valid_content(content):
 	return len(content) > 10 and len(content) < 5000
+
+
+def valid_comment(content):
+    """Return whether comment text is suitable for saving."""
+
+    return 1 <= len(content.strip()) <= 5000

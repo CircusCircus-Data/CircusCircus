@@ -1889,3 +1889,32 @@ select:focus{
 		min-height: 15rem;
 	}
 }
+
+/* Author and account management controls */
+.management-actions{
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: .6rem;
+}
+
+.management-actions form{
+	display: inline-block;
+	margin: 0;
+}
+
+.post-management{
+	margin-top: 1.25rem;
+}
+
+.comment-management{
+	margin-top: 1rem;
+}
+
+.settings-section{
+	margin-top: 2rem;
+}
+
+.danger-zone{
+	border-width: 2px;
+}

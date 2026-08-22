@@ -1,9 +1,9 @@
 import datetime
 
-from flask import Blueprint, request, redirect
+from flask import Blueprint, abort, render_template, request, redirect, url_for
 from flask_login import current_user, login_required
 
-from forum.models import Post, Comment, db, error
+from forum.models import Post, Comment, db, error, valid_comment
 
 
 # This Blueprint groups all comment-related routes together.
@@ -22,7 +22,9 @@ def add_comment():
     if not selected_post:
         return error("That post does not exist!")
 
-    content = request.form["content"]
+    content = request.form.get("content", "").strip()
+    if not valid_comment(content):
+        return error("Comment must be between 1 and 5000 characters long!"), 400
 
     # Create a new comment with the current date and time.
     new_comment = Comment(
@@ -40,3 +42,50 @@ def add_comment():
     db.session.commit()
 
     return redirect("/viewpost?post=" + str(post_id))
+
+
+def _can_manage_comment(comment):
+    """Allow a comment author or an administrator to manage a comment."""
+
+    return current_user.id == comment.user_id or current_user.admin
+
+
+@comments_bp.route("/comments/<int:comment_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_comment(comment_id):
+    """Display or process the form for editing a comment."""
+
+    comment = db.get_or_404(Comment, comment_id)
+    if not _can_manage_comment(comment):
+        abort(403)
+
+    if request.method == "GET":
+        return render_template("editcomment.html", comment=comment)
+
+    content = request.form.get("content", "").strip()
+    if not valid_comment(content):
+        return render_template(
+            "editcomment.html",
+            comment=comment,
+            errors=["Comment must be between 1 and 5000 characters long!"],
+            submitted_content=content,
+        ), 400
+
+    comment.content = content
+    db.session.commit()
+    return redirect(url_for("posts.viewpost", post=comment.post_id))
+
+
+@comments_bp.route("/comments/<int:comment_id>/delete", methods=["POST"])
+@login_required
+def delete_comment(comment_id):
+    """Delete a comment owned by the user or managed by an administrator."""
+
+    comment = db.get_or_404(Comment, comment_id)
+    if not _can_manage_comment(comment):
+        abort(403)
+
+    post_id = comment.post_id
+    db.session.delete(comment)
+    db.session.commit()
+    return redirect(url_for("posts.viewpost", post=post_id))

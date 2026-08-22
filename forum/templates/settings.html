@@ -33,4 +33,57 @@
 	</form>
 </div>
 
+<div class="loginbox panel panel-default settings-section">
+	<div class="panel-heading"><h2 class="panel-title">Change password</h2></div>
+	<div class="panel-body">
+	{% if password_success %}
+	<p class="alert alert-success" role="status">{{ password_success }}</p>
+	{% endif %}
+	{% if password_errors %}
+	<div class="alert alert-danger" role="alert">
+		{% for error in password_errors %}<p>{{ error }}</p>{% endfor %}
+	</div>
+	{% endif %}
+	<form action="{{ url_for('settings.change_password') }}" method="post">
+		<div class="form-group">
+			<label for="current-password">Current password</label>
+			<input class="form-control" id="current-password" name="current_password" type="password" required autocomplete="current-password">
+		</div>
+		<div class="form-group">
+			<label for="new-password">New password</label>
+			<input class="form-control" id="new-password" name="new_password" type="password" required minlength="6" maxlength="40" autocomplete="new-password">
+		</div>
+		<div class="form-group">
+			<label for="confirm-password">Confirm new password</label>
+			<input class="form-control" id="confirm-password" name="confirm_password" type="password" required minlength="6" maxlength="40" autocomplete="new-password">
+		</div>
+		<button class="btn btn-primary" type="submit">Change password</button>
+	</form>
+	</div>
+</div>
+
+<div class="loginbox panel panel-danger settings-section danger-zone">
+	<div class="panel-heading"><h2 class="panel-title">Delete account</h2></div>
+	<div class="panel-body">
+		<p>Deleting your account permanently removes your posts, their comments, your comments, and your reactions.</p>
+		<p>Accounts with direct-message history cannot be deleted because messages are being left unchanged.</p>
+		{% if deletion_errors %}
+		<div class="alert alert-danger" role="alert">
+			{% for error in deletion_errors %}<p>{{ error }}</p>{% endfor %}
+		</div>
+		{% endif %}
+		<form action="{{ url_for('settings.delete_account') }}" method="post" onsubmit="return confirm('Permanently delete your account and forum content? This cannot be undone.');">
+			<div class="form-group">
+				<label for="delete-password">Password</label>
+				<input class="form-control" id="delete-password" name="delete_password" type="password" required autocomplete="current-password">
+			</div>
+			<div class="form-group">
+				<label for="delete-confirmation">Type DELETE to confirm</label>
+				<input class="form-control" id="delete-confirmation" name="delete_confirmation" required autocomplete="off">
+			</div>
+			<button class="btn btn-danger" type="submit">Permanently delete account</button>
+		</form>
+	</div>
+</div>
+
 {% endblock %}

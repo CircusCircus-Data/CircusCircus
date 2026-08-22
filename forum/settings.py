@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, request
-from flask_login import current_user, login_required
+from flask import Blueprint, redirect, render_template, request, url_for
+from flask_login import current_user, login_required, logout_user
+from sqlalchemy import or_
 from sqlalchemy.exc import IntegrityError
 
+from forum.messages import Message
 from forum.models import User, db
-from forum.user import valid_email, valid_username
+from forum.user import valid_email, valid_password, valid_username
 
 
 # Group account-settings routes in their own Blueprint.
@@ -68,3 +70,76 @@ def action_settings():
         "settings.html",
         success_message="Your account settings were saved.",
     )
+
+
+@settings_bp.route("/settings/password", methods=["POST"])
+@login_required
+def change_password():
+    """Change the authenticated user's password after verification."""
+
+    current_password = request.form.get("current_password", "")
+    new_password = request.form.get("new_password", "")
+    confirm_password = request.form.get("confirm_password", "")
+    errors = []
+
+    if not current_user.check_password(current_password):
+        errors.append("Your current password is incorrect.")
+    if not valid_password(new_password):
+        errors.append(
+            "New password must be 6 to 40 characters and use only letters, "
+            "numbers, or ! @ # % &."
+        )
+    if new_password != confirm_password:
+        errors.append("New password and confirmation do not match.")
+
+    if errors:
+        return render_template(
+            "settings.html",
+            password_errors=errors,
+        ), 400
+
+    current_user.set_password(new_password)
+    db.session.commit()
+    return render_template(
+        "settings.html",
+        password_success="Your password was changed.",
+    )
+
+
+@settings_bp.route("/settings/delete", methods=["POST"])
+@login_required
+def delete_account():
+    """Delete an account only when doing so cannot alter message history."""
+
+    password = request.form.get("delete_password", "")
+    confirmation = request.form.get("delete_confirmation", "").strip()
+    errors = []
+
+    if not current_user.check_password(password):
+        errors.append("Your password is incorrect.")
+    if confirmation != "DELETE":
+        errors.append('Type DELETE exactly to confirm account deletion.')
+
+    has_messages = Message.query.filter(
+        or_(
+            Message.sender_id == current_user.id,
+            Message.recipient_id == current_user.id,
+        )
+    ).first() is not None
+    if has_messages:
+        errors.append(
+            "This account has direct-message history and cannot be deleted "
+            "without changing messages."
+        )
+
+    if errors:
+        return render_template(
+            "settings.html",
+            deletion_errors=errors,
+        ), 400
+
+    user = current_user._get_current_object()
+    logout_user()
+    db.session.delete(user)
+    db.session.commit()
+    return redirect(url_for("index"))
