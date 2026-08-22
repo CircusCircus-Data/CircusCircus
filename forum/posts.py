@@ -1,6 +1,6 @@
 import datetime
 
-from flask import Blueprint, abort, render_template, request, redirect
+from flask import Blueprint, abort, render_template, request, redirect, url_for
 from flask_login import current_user, login_required
 
 from forum.models import (
@@ -214,3 +214,77 @@ def action_post():
     db.session.commit()
 
     return redirect("/viewpost?post=" + str(new_post.id))
+
+
+def _can_manage_post(post):
+    """Allow a post author or an administrator to manage a post."""
+
+    return current_user.id == post.user_id or current_user.admin
+
+
+@posts_bp.route("/posts/<int:post_id>/edit", methods=["GET", "POST"])
+@login_required
+def edit_post(post_id):
+    """Display or process the form for editing an existing post."""
+
+    post = db.get_or_404(Post, post_id)
+    if not _can_manage_post(post):
+        abort(403)
+
+    if request.method == "GET":
+        return render_template("editpost.html", post=post)
+
+    title = request.form.get("title", "").strip()
+    content = request.form.get("content", "").strip()
+    visibility = request.form.get("visibility", "public")
+    image_url = request.form.get("image_url", "").strip()
+    video_url = request.form.get("video_url", "").strip()
+    errors = []
+
+    if not valid_title(title):
+        errors.append("Title must be between 5 and 139 characters long!")
+    if not valid_content(content):
+        errors.append("Post must be between 11 and 4999 characters long!")
+    if visibility not in {"public", "private"}:
+        errors.append("Post visibility must be Public or Private!")
+    if not valid_image_url(image_url):
+        errors.append(
+            "Image must be an HTTPS link ending in JPG, JPEG, PNG, GIF, or WEBP."
+        )
+    if not valid_video_url(video_url):
+        errors.append("Video must be a valid HTTPS YouTube or Vimeo link.")
+
+    if errors:
+        return render_template(
+            "editpost.html",
+            post=post,
+            errors=errors,
+            submitted_title=title,
+            submitted_content=content,
+            selected_visibility=visibility,
+            submitted_image_url=image_url,
+            submitted_video_url=video_url,
+        ), 400
+
+    post.title = title
+    post.content = content
+    post.visibility = visibility
+    post.image_url = image_url or None
+    post.video_url = video_url or None
+    db.session.commit()
+    return redirect(url_for("posts.viewpost", post=post.id))
+
+
+@posts_bp.route("/posts/<int:post_id>/delete", methods=["POST"])
+@login_required
+def delete_post(post_id):
+    """Delete a post and its attached comments and reactions."""
+
+    post = db.get_or_404(Post, post_id)
+    if not _can_manage_post(post):
+        abort(403)
+
+    subforum_id = post.subforum_id
+    db.session.delete(post)
+    db.session.commit()
+    return redirect(url_for("posts.subforum", sub=subforum_id))

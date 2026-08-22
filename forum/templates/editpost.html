@@ -1,0 +1,38 @@
+{% extends 'layout.html' %}
+{% block body %}
+<div class="postsubmit panel panel-default">
+	<div class="panel-heading"><h2 class="panel-title">Edit post</h2></div>
+	<div class="panel-body">
+	<form action="{{ url_for('posts.edit_post', post_id=post.id) }}" method="post">
+		<div class="form-group">
+			<label for="edit-post-title">Title</label>
+			<input class="form-control" id="edit-post-title" name="title" maxlength="139" required value="{{ submitted_title|default(post.title) }}">
+		</div>
+		<div class="form-group">
+			<label for="edit-post-content">Post</label>
+			<textarea class="form-control" id="edit-post-content" name="content" rows="12" maxlength="4999" required>{{ submitted_content|default(post.content) }}</textarea>
+		</div>
+		<div class="form-group">
+			<label for="edit-post-visibility">Visibility</label>
+			{% set visibility = selected_visibility|default(post.visibility) %}
+			<select class="form-control" id="edit-post-visibility" name="visibility">
+				<option value="public"{% if visibility == 'public' %} selected{% endif %}>Public</option>
+				<option value="private"{% if visibility == 'private' %} selected{% endif %}>Private</option>
+			</select>
+		</div>
+		<div class="form-group">
+			<label for="edit-image-url">Image URL (optional)</label>
+			<input class="form-control" id="edit-image-url" name="image_url" type="url" value="{{ submitted_image_url|default(post.image_url or '') }}">
+		</div>
+		<div class="form-group">
+			<label for="edit-video-url">YouTube or Vimeo URL (optional)</label>
+			<input class="form-control" id="edit-video-url" name="video_url" type="url" value="{{ submitted_video_url|default(post.video_url or '') }}">
+		</div>
+		<div class="management-actions">
+			<button class="btn btn-primary" type="submit">Save changes</button>
+			<a class="btn btn-default" href="{{ url_for('posts.viewpost', post=post.id) }}">Cancel</a>
+		</div>
+	</form>
+	</div>
+</div>
+{% endblock %}

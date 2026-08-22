@@ -21,6 +21,14 @@
 				allowfullscreen></iframe>
 		</div>
 		{% endif %}
+		{% if current_user.is_authenticated and (current_user.id == post.user_id or current_user.admin) %}
+		<div class="management-actions post-management">
+			<a class="btn btn-default btn-sm" href="{{ url_for('posts.edit_post', post_id=post.id) }}">Edit post</a>
+			<form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="post" onsubmit="return confirm('Delete this post and all of its comments? This cannot be undone.');">
+				<button class="btn btn-danger btn-sm" type="submit">Delete post</button>
+			</form>
+		</div>
+		{% endif %}
 		<!-- Display the post's emoji reactions. -->
 <div class="post-reactions" aria-label="Post reactions">
     <h2>Reactions</h2>
@@ -111,6 +119,14 @@
 		</header>
 		<div class="commentcontent panel-body">
 			{{ comment.content }}
+			{% if current_user.is_authenticated and (current_user.id == comment.user_id or current_user.admin) %}
+			<div class="management-actions comment-management">
+				<a class="btn btn-default btn-xs" href="{{ url_for('comments.edit_comment', comment_id=comment.id) }}">Edit</a>
+				<form action="{{ url_for('comments.delete_comment', comment_id=comment.id) }}" method="post" onsubmit="return confirm('Delete this comment? This cannot be undone.');">
+					<button class="btn btn-danger btn-xs" type="submit">Delete</button>
+				</form>
+			</div>
+			{% endif %}
 		</div>
 	</article>
 {% endfor %}
