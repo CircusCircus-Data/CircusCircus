@@ -20,7 +20,7 @@
 	{% for conversation in conversations %}
 	<a class="conversation-row{% if conversation.unread_count %} unread{% endif %}"
 	   href="{{ url_for('messages.conversation', user_id=conversation.user.id) }}">
-		<span class="conversation-user">{{ conversation.user.username }}</span>
+		<span class="conversation-user">{% with user=conversation.user, linked=false %}{% include '_user_badge.html' %}{% endwith %}</span>
 		<span class="conversation-preview">{{ conversation.last_message.content|truncate(80) }}</span>
 		{% if conversation.unread_count %}
 		<span class="unread-badge">{{ conversation.unread_count }}</span>

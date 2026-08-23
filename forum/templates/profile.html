@@ -81,7 +81,7 @@
 				<a href="/viewpost?post={{ reaction.post.id }}">
 					<span>{{ reaction.post.subforum.title }}</span>
 					<strong>{{ reaction.post.title }}</strong>
-					<small>By @{{ reaction.post.user.username }}{% if reaction.post.visibility == 'private' %} · Private{% endif %}</small>
+					<small class="reaction-post-author">By {% with user=reaction.post.user, linked=false, size='tiny' %}{% include '_user_badge.html' %}{% endwith %}{% if reaction.post.visibility == 'private' %} · Private{% endif %}</small>
 				</a>
 			{% else %}
 				<p class="reaction-empty">No {{ label|lower }} yet.</p>

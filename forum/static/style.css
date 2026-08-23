@@ -1059,6 +1059,11 @@ select:focus{
 .message-header h2{
 	margin-bottom: 0;
 }
+.conversation-heading{
+	display: inline-flex;
+	align-items: center;
+	gap: .5rem;
+}
 .new-conversation{
 	font-family: "Courier New", monospace;
 	font-size: 0.9rem;
@@ -1092,6 +1097,11 @@ select:focus{
 	font-size: 0.9rem;
 	font-weight: bold;
 	text-transform: uppercase;
+}
+.conversation-user .user-badge,
+.message-author .user-badge{
+	font-family: inherit;
+	font-size: inherit;
 }
 .unread-badge{
 	min-width: 1.6rem;
@@ -1456,6 +1466,11 @@ select:focus{
 	border: 2px solid var(--ink);
 	border-radius: 50%;
 	background: var(--signal);
+}
+.account-chip .user-badge .musician-avatar{
+	width: 2.75rem;
+	height: 2.75rem;
+	border: 2px solid var(--ink);
 }
 .station-ticker{
 	overflow: hidden;
@@ -1989,6 +2004,45 @@ select:focus{
 	background-position: center;
 	background-size: contain;
 	image-rendering: pixelated;
+}
+.user-badge{
+	display: inline-flex;
+	align-items: center;
+	gap: .55rem;
+	min-width: 0;
+	color: inherit;
+	font-weight: 800;
+	line-height: 1;
+	text-decoration: none;
+	vertical-align: middle;
+}
+.user-badge:hover,
+.user-badge:focus{
+	color: var(--violet);
+	text-decoration: none;
+}
+.user-badge .musician-avatar{
+	flex: 0 0 auto;
+	width: 2.75rem;
+	height: 2.75rem;
+	border: 1px solid rgba(255,255,255,.35);
+	border-radius: 50%;
+	background-color: #171319;
+	background-size: contain;
+}
+.user-badge-tiny .musician-avatar{
+	width: 1.8rem;
+	height: 1.8rem;
+}
+.post-author{
+	display: inline-flex;
+	align-items: center;
+	gap: .4rem;
+}
+.reaction-post-author{
+	display: flex;
+	align-items: center;
+	gap: .3rem;
 }
 .avatar-guitar{ background-image: url("images/avatars/guitar.png"); }
 .avatar-drums{ background-image: url("images/avatars/drums.png"); }
