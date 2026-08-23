@@ -1,0 +1,48 @@
+services:
+  db:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: "${DATABASE_NAME:-circuscircus}"
+      MYSQL_USER: "${DATABASE_USER:-circus_app}"
+      MYSQL_PASSWORD: "${DATABASE_PASSWORD:-soundlab-local-development-only}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-soundlab-root-local-development-only}"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - mysqladmin ping -h localhost -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    restart: unless-stopped
+
+  web:
+    build:
+      context: .
+    ports:
+      - "${APP_PORT:-5001}:5000"
+    environment:
+      SECRET_KEY: "${SECRET_KEY:-soundlab-local-development-only}"
+      DATABASE_HOST: db
+      DATABASE_NAME: "${DATABASE_NAME:-circuscircus}"
+      DATABASE_USER: "${DATABASE_USER:-circus_app}"
+      DATABASE_PASSWORD: "${DATABASE_PASSWORD:-soundlab-local-development-only}"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://localhost:5000/', timeout=2)
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  mysql_data:

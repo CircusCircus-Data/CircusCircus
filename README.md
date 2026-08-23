@@ -46,6 +46,53 @@ and it should appear on port 5000
 
 `http://0.0.0.0:5000`
 
+## Run with Docker
+
+Docker packages the Python runtime, dependencies, and application into the
+same reproducible image for every teammate. Install Docker Desktop, start it,
+and then run this command from the project root:
+
+```sh
+docker compose up --build
+```
+
+Open <http://localhost:5001>. The first build installs the Python packages and
+downloads MySQL, so it can take a few minutes; later starts reuse Docker's
+cache. Compose runs two containers: `web` runs Flask through Gunicorn and `db`
+runs MySQL 8.4. Flask reaches MySQL at the hostname `db` on Compose's private
+network. The `mysql_data` Docker volume keeps the database when containers are
+recreated.
+
+The `APP_PORT` value in `.env` controls the Mac-side port. It defaults to 5001
+because macOS may reserve port 5000; Gunicorn still listens on port 5000 inside
+the container.
+
+Before starting, copy `.env.example` to `.env` and replace every placeholder.
+Compose reads this local file to configure both services, while `.gitignore`
+prevents its secrets from being committed.
+
+Useful commands:
+
+```sh
+# Start again without rebuilding when no dependencies changed.
+docker compose up
+
+# Stop and remove both containers. The mysql_data database volume remains.
+docker compose down
+
+# Follow application output while the container is running in the background.
+docker compose logs --follow web
+
+# Run the test suite in the same app image. Tests use isolated in-memory data.
+docker compose run --rm web python -m unittest discover -s tests
+```
+
+Do not use `docker compose down --volumes` unless you intentionally want to
+delete the Dockerized MySQL database. Never commit the local `.env` file.
+
+See [the SoundLab Docker guide](Docs/docker.md) for the architecture, complete
+teammate setup, startup sequence, and troubleshooting explanations.
+
 ## Changes in 2023
 
 database is now in `instance/` directory
