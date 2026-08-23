@@ -1,0 +1,48 @@
+flowchart TB
+    User(["Visitor / Member / Admin"])
+
+    subgraph Host["Host machine"]
+        Browser["Web browser<br/>localhost:5001"]
+
+        subgraph Compose["Docker Compose private network"]
+            subgraph Web["web container — Python 3.12"]
+                Runtime["Gunicorn :5000<br/>Flask application factory"]
+                Controllers["Blueprint controllers<br/>Auth · Posts · Comments · Reactions<br/>Messages · Settings · Profiles"]
+                Services["Application services<br/>Markdown sanitization · Media validation<br/>MusicBrainz client"]
+                ORM["Flask-SQLAlchemy / PyMySQL<br/>Application models"]
+                UI["Jinja templates<br/>CSS · avatar assets"]
+            end
+
+            MySQL[("MySQL 8.4<br/>db:3306")]
+        end
+
+        Volume[("mysql_data<br/>persistent volume")]
+    end
+
+    External["External services<br/>MusicBrainz API · Cover Art Archive"]
+
+    User --> Browser
+    Browser -->|"HTTP :5001"| Runtime
+    Runtime --> Controllers
+    Controllers --> Services
+    Controllers --> ORM
+    Controllers --> UI
+    Services --> UI
+    ORM -->|"SQL"| MySQL
+    MySQL --> Volume
+    Services -->|"HTTPS search"| External
+    UI -->|"HTTPS covers"| External
+
+    classDef actor fill:#ffe66d,stroke:#111,stroke-width:3px,color:#111;
+    classDef runtime fill:#7bdff2,stroke:#111,stroke-width:2px,color:#111;
+    classDef controller fill:#b2f7ef,stroke:#111,stroke-width:1.5px,color:#111;
+    classDef service fill:#eff7f6,stroke:#5b3cc4,stroke-width:2px,color:#111;
+    classDef data fill:#f2b5d4,stroke:#111,stroke-width:2px,color:#111;
+    classDef external fill:#cdb4db,stroke:#111,stroke-width:2px,color:#111;
+
+    class User actor;
+    class Browser,Runtime,UI runtime;
+    class Controllers controller;
+    class Services service;
+    class ORM,MySQL,Volume data;
+    class External external;
