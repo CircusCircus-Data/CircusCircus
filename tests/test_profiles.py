@@ -10,7 +10,7 @@ from flask_login import LoginManager
 from forum.formatting import render_markdown
 from forum.models import CollectionItem, Post, Profile, Reaction, Subforum, User, db
 from forum.musicbrainz import search_releases
-from forum.profiles import profiles_bp
+from forum.profiles import profiles_bp, qualifying_post_count
 
 
 class ProfilesTests(unittest.TestCase):
@@ -75,6 +75,62 @@ class ProfilesTests(unittest.TestCase):
             profile = Profile.query.filter_by(user_id=self.user_id).one()
             self.assertEqual(profile.display_name, "Sound Artist")
             self.assertEqual(profile.avatar_style, "lyricist")
+
+    def test_qualifying_posts_enforce_all_reward_rules(self):
+        now = datetime.datetime.now()
+        substantial = "A thoughtful discussion about music production choices. " * 3
+        with self.app.app_context():
+            user = db.session.get(User, self.user_id)
+            posts = [
+                Post("Qualifies", substantial, now - datetime.timedelta(days=2)),
+                Post("Duplicate", "  " + substantial.upper(), now - datetime.timedelta(days=2)),
+                Post("Too short", "Brief thought", now - datetime.timedelta(days=2)),
+                Post("Too new", substantial + "new", now - datetime.timedelta(hours=2)),
+                Post(
+                    "Private",
+                    substantial + "private",
+                    now - datetime.timedelta(days=2),
+                    visibility="private",
+                ),
+            ]
+            user.posts.extend(posts)
+            db.session.commit()
+            self.assertEqual(qualifying_post_count(user, now=now), 1)
+
+    def test_locked_headliner_avatar_cannot_be_forged(self):
+        self.login()
+        response = self.client.post(
+            "/profile/edit",
+            data={"avatar_style": "premium-synth", "bio": ""},
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn(b"requires 10 qualifying posts", response.data)
+        with self.app.app_context():
+            profile = Profile.query.filter_by(user_id=self.user_id).first()
+            self.assertTrue(profile is None or profile.avatar_style == "synth")
+
+    def test_headliner_avatar_unlocks_at_threshold(self):
+        now = datetime.datetime.now()
+        with self.app.app_context():
+            user = db.session.get(User, self.user_id)
+            for number in range(10):
+                content = (f"Original qualifying discussion number {number}. " * 4)
+                user.posts.append(Post(
+                    f"Discussion {number}",
+                    content,
+                    now - datetime.timedelta(days=2),
+                ))
+            db.session.commit()
+
+        self.login()
+        response = self.client.post(
+            "/profile/edit",
+            data={"avatar_style": "premium-synth", "bio": ""},
+        )
+        self.assertEqual(response.status_code, 302)
+        with self.app.app_context():
+            profile = Profile.query.filter_by(user_id=self.user_id).one()
+            self.assertEqual(profile.avatar_style, "premium-synth")
 
     def test_collection_item_is_unique_and_owner_can_remove_it(self):
         self.login()

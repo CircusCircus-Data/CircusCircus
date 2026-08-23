@@ -14,10 +14,18 @@
 				<div class="col-sm-4 form-group"><label for="favorite_genres">Favorite genres</label><input class="form-control" id="favorite_genres" name="favorite_genres" maxlength="255" value="{{ profile.favorite_genres or '' }}" placeholder="House, jazz, ambient"></div>
 			</div>
 			<fieldset class="avatar-picker"><legend>Choose your musician avatar</legend><div class="avatar-options">
-			{% for style, label in [('synth', 'Synth'), ('guitar', 'Guitar'), ('bass', 'Bass'), ('drums', 'Drums'), ('vocalist', 'Vocalist'), ('dj', 'DJ'), ('horns', 'Horns'), ('lyricist', 'Lyricist')] %}
-			<label class="avatar-option"><input type="radio" name="avatar_style" value="{{ style }}" {% if profile.avatar_style == style %}checked{% endif %}><span>{% with avatar_style=style %}{% include '_musician_avatar.html' %}{% endwith %}<b>{{ label }}</b></span></label>
+			{% for avatar in standard_avatars %}
+			<label class="avatar-option" title="{{ avatar.label }}"><input type="radio" name="avatar_style" value="{{ avatar.style }}" aria-label="{{ avatar.label }}" {% if profile.avatar_style == avatar.style %}checked{% endif %}><span>{% with avatar_style=avatar.style %}{% include '_musician_avatar.html' %}{% endwith %}</span></label>
 			{% endfor %}
 			</div></fieldset>
+			<fieldset class="avatar-picker headliner-picker"><legend>SoundLab Headliners</legend>
+			<div class="avatar-options">
+			{% for avatar in premium_avatars %}
+			<label class="avatar-option{% if not avatar.unlocked %} is-locked{% endif %}" title="{{ avatar.label }}"><input type="radio" name="avatar_style" value="{{ avatar.style }}" aria-label="{{ avatar.label }}" {% if profile.avatar_style == avatar.style %}checked{% endif %} {% if not avatar.unlocked %}disabled{% endif %}><span>{% with avatar_style=avatar.style %}{% include '_musician_avatar.html' %}{% endwith %}<small class="avatar-status">{% if avatar.unlocked %}🔓 Unlocked{% else %}🔒 {{ qualifying_post_count }}/{{ avatar.threshold }}{% endif %}</small></span></label>
+			{% endfor %}
+			</div>
+			<small class="headliner-note"><sup>*</sup> Public posts qualify after 24 hours when they contain at least 100 non-whitespace characters.</small>
+			</fieldset>
 			<button class="btn btn-primary btn-lg" type="submit">Save profile</button>
 			<a class="btn btn-default btn-lg" href="{{ url_for('profiles.profile', username=current_user.username) }}">Cancel</a>
 		</form>

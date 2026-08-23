@@ -1,5 +1,6 @@
 """Public profiles and native Sound Lab music collections."""
 
+import datetime
 import re
 
 from flask import Blueprint, abort, redirect, render_template, request, url_for
@@ -11,8 +12,78 @@ from forum.musicbrainz import MusicBrainzUnavailable, search_releases
 
 
 profiles_bp = Blueprint("profiles", __name__)
-AVATAR_STYLES = {"synth", "guitar", "bass", "drums", "vocalist", "dj", "horns", "lyricist"}
+STANDARD_AVATARS = (
+    ("guitar", "Punk guitarist"), ("drums", "Drummer"),
+    ("bass", "Bass player"), ("synth", "Synth player"),
+    ("vocalist", "Vocalist"), ("dj", "DJ"),
+    ("horns", "Horn player"), ("lyricist", "Lyricist"),
+    ("guitar-alt", "Punk guitarist II"), ("drums-alt", "Drummer II"),
+    ("bass-alt", "Bass player II"), ("synth-alt", "Synth player II"),
+    ("vocalist-alt", "Vocalist II"), ("dj-alt", "DJ II"),
+    ("horns-alt", "Horn player II"), ("lyricist-alt", "Lyricist II"),
+)
+HEADLINER_AVATARS = {
+    "premium-synth": ("Synth engineer", 10),
+    "premium-vocalist": ("Spotlight vocalist", 25),
+    "premium-producer": ("Beat producer", 50),
+    "premium-percussion": ("Percussionist", 100),
+}
+AVATAR_STYLES = {style for style, _label in STANDARD_AVATARS} | set(HEADLINER_AVATARS)
+QUALIFYING_POST_MIN_CHARACTERS = 100
+QUALIFYING_POST_MIN_AGE = datetime.timedelta(hours=24)
 MBID_PATTERN = re.compile(r"^[0-9a-fA-F-]{36}$")
+
+
+def qualifying_post_count(user, now=None):
+    """Count public, substantial, mature, non-duplicate discussion posts."""
+
+    cutoff = (now or datetime.datetime.now()) - QUALIFYING_POST_MIN_AGE
+    posts = (
+        Post.query
+        .filter(
+            Post.user_id == user.id,
+            Post.visibility == "public",
+            Post.postdate <= cutoff,
+        )
+        .order_by(Post.postdate.asc(), Post.id.asc())
+        .all()
+    )
+    seen_content = set()
+    count = 0
+    for post in posts:
+        content = post.content or ""
+        if len(re.sub(r"\s+", "", content)) < QUALIFYING_POST_MIN_CHARACTERS:
+            continue
+        normalized_content = " ".join(content.casefold().split())
+        if normalized_content in seen_content:
+            continue
+        seen_content.add(normalized_content)
+        count += 1
+    return count
+
+
+def _avatar_choices(post_count):
+    standard = [
+        {"style": style, "label": label, "premium": False, "unlocked": True}
+        for style, label in STANDARD_AVATARS
+    ]
+    premium = [
+        {
+            "style": style,
+            "label": label,
+            "premium": True,
+            "threshold": threshold,
+            "unlocked": post_count >= threshold,
+        }
+        for style, (label, threshold) in HEADLINER_AVATARS.items()
+    ]
+    return standard, premium
+
+
+def _can_use_avatar(style, post_count):
+    if style not in AVATAR_STYLES:
+        return False
+    return style not in HEADLINER_AVATARS or post_count >= HEADLINER_AVATARS[style][1]
 
 
 def _profile_for(user, create=False):
@@ -27,6 +98,7 @@ def _profile_for(user, create=False):
 @profiles_bp.route("/users/<username>")
 def profile(username):
     user = User.query.filter_by(username=username).first_or_404()
+    profile_record = _profile_for(user)
     active_tab = request.args.get("tab", "collection")
     if active_tab not in {"collection", "reactions"}:
         active_tab = "collection"
@@ -45,10 +117,15 @@ def profile(username):
         if reaction.reaction_type in grouped_reactions:
             grouped_reactions[reaction.reaction_type].append(reaction)
 
+    post_count = qualifying_post_count(user)
+    avatar_style = profile_record.avatar_style if (
+        _can_use_avatar(profile_record.avatar_style, post_count)
+    ) else "synth"
     return render_template(
         "profile.html",
         profile_user=user,
-        profile=_profile_for(user),
+        profile=profile_record,
+        avatar_style=avatar_style,
         active_tab=active_tab,
         grouped_reactions=grouped_reactions,
         reaction_total=sum(len(items) for items in grouped_reactions.values()),
@@ -59,14 +136,24 @@ def profile(username):
 @login_required
 def edit_profile():
     profile = _profile_for(current_user, create=True)
+    post_count = qualifying_post_count(current_user)
+    standard_avatars, premium_avatars = _avatar_choices(post_count)
     if request.method == "POST":
         avatar_style = request.form.get("avatar_style", "synth")
         bio = request.form.get("bio", "").strip()
-        if avatar_style not in AVATAR_STYLES or len(bio) > 1000:
+        if not _can_use_avatar(avatar_style, post_count) or len(bio) > 1000:
+            if avatar_style in HEADLINER_AVATARS:
+                required = HEADLINER_AVATARS[avatar_style][1]
+                error = f"That Headliner avatar requires {required} qualifying posts."
+            else:
+                error = "Choose a valid avatar and keep your bio under 1,000 characters."
             return render_template(
                 "edit_profile.html",
                 profile=profile,
-                errors=["Choose a valid avatar and keep your bio under 1,000 characters."],
+                errors=[error],
+                qualifying_post_count=post_count,
+                standard_avatars=standard_avatars,
+                premium_avatars=premium_avatars,
             ), 400
         profile.display_name = request.form.get("display_name", "").strip()[:80]
         profile.location = request.form.get("location", "").strip()[:100]
@@ -76,7 +163,13 @@ def edit_profile():
         profile.bio = bio
         db.session.commit()
         return redirect(url_for("profiles.profile", username=current_user.username))
-    return render_template("edit_profile.html", profile=profile)
+    return render_template(
+        "edit_profile.html",
+        profile=profile,
+        qualifying_post_count=post_count,
+        standard_avatars=standard_avatars,
+        premium_avatars=premium_avatars,
+    )
 
 
 @profiles_bp.route("/collection/search")

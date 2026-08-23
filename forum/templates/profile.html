@@ -3,7 +3,7 @@
 {% block body %}
 <section class="profile-hero">
 	<div class="profile-avatar-panel">
-		{% with avatar_style=profile.avatar_style %}{% include '_musician_avatar.html' %}{% endwith %}
+		{% with avatar_style=avatar_style %}{% include '_musician_avatar.html' %}{% endwith %}
 		<span class="profile-signal"><i></i> Member signal</span>
 	</div>
 	<div class="profile-identity">
