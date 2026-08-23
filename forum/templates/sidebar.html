@@ -1,0 +1,22 @@
+<div class="sidebar-status">
+	<span class="sidebar-label">Control room</span><strong>SL–001</strong><span class="sidebar-online"><i></i> On air</span>
+</div>
+<nav class="rack-nav" aria-label="Primary navigation">
+	<a href="/"><span class="rack-icon">⌂</span><span>Forum</span><i></i></a>
+	{% if current_user.is_authenticated %}
+	<a href="/users/{{ current_user.username|urlencode }}"><span class="rack-icon">▣</span><span>Profile</span><i></i></a>
+	<a href="/messages/"><span class="rack-icon">▤</span><span>Messages</span><i></i></a>
+	<a href="/settings"><span class="rack-icon">◉</span><span>Settings</span><i></i></a>
+	<a href="/action_logout"><span class="rack-icon">↪</span><span>Log out</span><i></i></a>
+	{% else %}
+	<a href="/loginform"><span class="rack-icon">◉</span><span>Log in / Join</span><i></i></a>
+	{% endif %}
+</nav>
+<div class="sidebar-module sidebar-record" aria-hidden="true">
+	<div class="sidebar-disc"><i></i></div><div><span class="sidebar-label">Deck A</span><strong>Community loop</strong></div>
+</div>
+<div class="sidebar-module">
+	<span class="sidebar-label">Sequence / 08</span>
+	<div class="rack-sequence" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+</div>
+<p class="sidebar-note">Independent conversation for people making culture in every frequency.</p>

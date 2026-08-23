@@ -1,0 +1,98 @@
+{% extends 'layout.html' %}
+{% block title %}@{{ profile_user.username }} / Sound Lab{% endblock %}
+{% block body %}
+<section class="profile-hero">
+	<div class="profile-avatar-panel">
+		{% with avatar_style=avatar_style %}{% include '_musician_avatar.html' %}{% endwith %}
+		<span class="profile-signal"><i></i> Member signal</span>
+	</div>
+	<div class="profile-identity">
+		<span class="section-kicker">Sound Lab member / {{ '%04d'|format(profile_user.id) }}</span>
+		<h1>{{ profile.display_name or profile_user.username }}</h1>
+		<p class="profile-handle">@{{ profile_user.username }}</p>
+		{% if profile.bio %}<p class="profile-bio">{{ profile.bio }}</p>{% else %}<p class="profile-bio text-muted">This musician has not written a bio yet.</p>{% endif %}
+		<div class="profile-facts">
+			{% if profile.location %}<span><b>Location</b>{{ profile.location }}</span>{% endif %}
+			{% if profile.instruments %}<span><b>Plays</b>{{ profile.instruments }}</span>{% endif %}
+			{% if profile.favorite_genres %}<span><b>Frequencies</b>{{ profile.favorite_genres }}</span>{% endif %}
+		</div>
+		{% if current_user.is_authenticated and current_user.id == profile_user.id %}
+		<div class="profile-actions"><a class="btn btn-default" href="{{ url_for('profiles.edit_profile') }}">Edit profile</a><a class="btn btn-primary" href="{{ url_for('profiles.collection_search') }}">+ Add music</a></div>
+		{% endif %}
+	</div>
+</section>
+
+<nav class="profile-tabs" aria-label="Profile sections">
+	<a class="{% if active_tab == 'collection' %}active{% endif %}" href="{{ url_for('profiles.profile', username=profile_user.username, tab='collection') }}" {% if active_tab == 'collection' %}aria-current="page"{% endif %}>Collection <span>{{ profile_user.collection_items|length }}</span></a>
+	<a class="{% if active_tab == 'reactions' %}active{% endif %}" href="{{ url_for('profiles.profile', username=profile_user.username, tab='reactions') }}" {% if active_tab == 'reactions' %}aria-current="page"{% endif %}>Reactions <span>{{ reaction_total }}</span></a>
+</nav>
+
+{% if active_tab == 'collection' %}
+<section class="collection-section profile-tab-panel">
+	<div class="directory-heading">
+		<div><span class="section-kicker">Personal archive</span><h2>Music collection</h2></div>
+		<p>{{ profile_user.collection_items|length }} release{% if profile_user.collection_items|length != 1 %}s{% endif %} on the shelf.</p>
+	</div>
+	{% if profile_user.collection_items %}
+	<div class="record-shelf">
+		{% for item in profile_user.collection_items %}
+		<article class="release-card">
+			<a class="release-cover" href="https://musicbrainz.org/release-group/{{ item.musicbrainz_id }}" target="_blank" rel="noopener">
+				<div class="cover-fallback" aria-hidden="true"><i></i><span>SL</span></div>
+				<img src="{{ item.cover_url }}" alt="Cover art for {{ item.release_title }}" loading="lazy" onerror="this.style.display='none'">
+			</a>
+			<div class="release-info">
+				<span class="release-format">{{ item.release_format or 'Release' }}{% if item.release_date %} / {{ item.release_date[:4] }}{% endif %}</span>
+				<h3>{{ item.release_title }}</h3>
+				<p>{{ item.artist_name }}</p>
+				{% if item.personal_note %}<p class="release-note">{{ item.personal_note }}</p>{% endif %}
+			</div>
+			<div class="release-footer">
+				<a href="https://musicbrainz.org/release-group/{{ item.musicbrainz_id }}" target="_blank" rel="noopener">Data: MusicBrainz ↗</a>
+				{% if current_user.is_authenticated and current_user.id == profile_user.id %}
+				<form action="{{ url_for('profiles.remove_collection_item', item_id=item.id) }}" method="post" onsubmit="return confirm('Remove this release from your collection?');"><button type="submit">Remove</button></form>
+				{% endif %}
+			</div>
+		</article>
+		{% endfor %}
+	</div>
+	{% else %}
+	<div class="empty-collection panel panel-default">
+		<div class="empty-record" aria-hidden="true"><i></i></div>
+		<h3>The shelf is waiting.</h3>
+		<p>No releases have been added to this collection yet.</p>
+		{% if current_user.is_authenticated and current_user.id == profile_user.id %}<a class="btn btn-primary" href="{{ url_for('profiles.collection_search') }}">Search MusicBrainz</a>{% endif %}
+	</div>
+	{% endif %}
+</section>
+{% else %}
+<section class="reactions-section profile-tab-panel">
+	<div class="directory-heading">
+		<div><span class="section-kicker">Signal history</span><h2>Post reactions</h2></div>
+		<p>{{ reaction_total }} visible reaction{% if reaction_total != 1 %}s{% endif %} from @{{ profile_user.username }}.</p>
+	</div>
+	{% if reaction_total %}
+	<div class="reaction-columns">
+		{% for reaction_type, icon, label in [('like', '👍', 'Likes'), ('heart', '❤️', 'Hearts'), ('dislike', '👎', 'Dislikes')] %}
+		<section class="reaction-group reaction-group-{{ reaction_type }}">
+			<header><span aria-hidden="true">{{ icon }}</span><div><h3>{{ label }}</h3><small>{{ grouped_reactions[reaction_type]|length }} posts</small></div></header>
+			<div class="reaction-post-list">
+			{% for reaction in grouped_reactions[reaction_type] %}
+				<a href="/viewpost?post={{ reaction.post.id }}">
+					<span>{{ reaction.post.subforum.title }}</span>
+					<strong>{{ reaction.post.title }}</strong>
+					<small class="reaction-post-author">By {% with user=reaction.post.user, linked=false, size='tiny' %}{% include '_user_badge.html' %}{% endwith %}{% if reaction.post.visibility == 'private' %} · Private{% endif %}</small>
+				</a>
+			{% else %}
+				<p class="reaction-empty">No {{ label|lower }} yet.</p>
+			{% endfor %}
+			</div>
+		</section>
+		{% endfor %}
+	</div>
+	{% else %}
+	<div class="empty-collection panel panel-default"><h3>No reactions on this channel yet.</h3><p>Likes, hearts, and dislikes will appear here as this member explores the forum.</p></div>
+	{% endif %}
+</section>
+{% endif %}
+{% endblock %}

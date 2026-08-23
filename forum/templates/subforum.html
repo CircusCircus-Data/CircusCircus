@@ -1,7 +1,7 @@
 {% extends 'layout.html' %}
 {% block body %}
 
-{{ path|safe }}
+<nav class="breadcrumb-path" aria-label="Breadcrumb">{{ path|safe }}</nav>
 <div class="subforumheader">
 	<div class="subforumheadertitle">
 	{{ subforum.title}} 
@@ -41,22 +41,23 @@
 
 
 {% if posts.first() %}
+	<div class="post-grid">
 	{% for post in posts %}
-	<div class="post">
-		<div class="posttitle">
+	<article class="post card panel panel-default">
+		<div class="posttitle panel-heading">
 		<a href="/viewpost?post={{ post.id }}">{{ post.title }}</a>
 		</div>
-		<div class="postusername">
-			by <b {% if post.user.admin %} style="color: red;" {% endif %}> {{post.user.username}}</b>
-			<div class="date">
-			{{ post.get_time_string() }}
-			</div>
+		<div class="postusername panel-body">
+			<span class="post-author">By {% with user=post.user %}{% include '_user_badge.html' %}{% endwith %}</span>
+			<time class="date">{{ post.get_time_string() }}</time>
 		</div>
-	</div>
+		<div class="panel-footer"><a href="/viewpost?post={{ post.id }}">Open transmission <span aria-hidden="true">→</span></a></div>
+	</article>
 	{% endfor %}
+	</div>
 
 {% else %}
-<div class="noposts">
+<div class="noposts alert alert-info" role="status">
 <b>There are no posts in this subforum</b>
 </div>
 {% endif %}

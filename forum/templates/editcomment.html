@@ -1,0 +1,18 @@
+{% extends 'layout.html' %}
+{% block body %}
+<div class="postsubmit panel panel-default">
+	<div class="panel-heading"><h2 class="panel-title">Edit comment</h2></div>
+	<div class="panel-body">
+	<form action="{{ url_for('comments.edit_comment', comment_id=comment.id) }}" method="post">
+		<div class="form-group">
+			<label for="edit-comment-content">Comment</label>
+			<textarea class="form-control" id="edit-comment-content" name="content" rows="8" maxlength="5000" required>{{ submitted_content|default(comment.content) }}</textarea>
+		</div>
+		<div class="management-actions">
+			<button class="btn btn-primary" type="submit">Save changes</button>
+			<a class="btn btn-default" href="{{ url_for('posts.viewpost', post=comment.post_id) }}">Cancel</a>
+		</div>
+	</form>
+	</div>
+</div>
+{% endblock %}

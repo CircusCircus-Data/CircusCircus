@@ -3,14 +3,14 @@
 <div class="message-header">
 	<h2>Messages</h2>
 	{% if users %}
-	<form class="new-conversation" method="get" onsubmit="this.action='/messages/conversation/' + this.user_id.value">
+	<form class="new-conversation form-inline" method="get" onsubmit="this.action='/messages/conversation/' + this.user_id.value">
 		<label for="user_id">Start a conversation:</label>
-		<select id="user_id" name="user_id" required>
+		<select class="form-control" id="user_id" name="user_id" required>
 			{% for user in users %}
 			<option value="{{ user.id }}">{{ user.username }}</option>
 			{% endfor %}
 		</select>
-		<button type="submit">Open</button>
+		<button class="btn btn-primary" type="submit">Open</button>
 	</form>
 	{% endif %}
 </div>
@@ -20,7 +20,7 @@
 	{% for conversation in conversations %}
 	<a class="conversation-row{% if conversation.unread_count %} unread{% endif %}"
 	   href="{{ url_for('messages.conversation', user_id=conversation.user.id) }}">
-		<span class="conversation-user">{{ conversation.user.username }}</span>
+		<span class="conversation-user">{% with user=conversation.user, linked=false %}{% include '_user_badge.html' %}{% endwith %}</span>
 		<span class="conversation-preview">{{ conversation.last_message.content|truncate(80) }}</span>
 		{% if conversation.unread_count %}
 		<span class="unread-badge">{{ conversation.unread_count }}</span>
@@ -29,6 +29,6 @@
 	{% endfor %}
 </div>
 {% else %}
-<p>You do not have any messages yet.</p>
+<div class="alert alert-info" role="status">You do not have any messages yet.</div>
 {% endif %}
 {% endblock %}

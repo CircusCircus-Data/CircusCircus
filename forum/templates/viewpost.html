@@ -1,41 +1,53 @@
 {% extends 'layout.html' %}
 {% block body %}
-{{ path|safe}}
+<nav class="breadcrumb-path" aria-label="Breadcrumb">{{ path|safe }}</nav>
 
-<div class="actualpost">
-	<div class="actualposttitle">
+<article class="actualpost card panel panel-default">
+	<header class="actualposttitle panel-heading">
 		<a href="/viewpost?post={{ post.id }}">{{post.title}}</a>
-		<div class="postposter" {% if post.user.admin %} style="color: red;" {% endif %}>
-			{{ post.user.username }}
-
-		</div>
-		<div class="posttime">
-			{{ post.get_time_string() }}
-		</div>
-	</div>
-	<div class="postcontent">
+		<div class="post-meta">{% with user=post.user %}{% include '_user_badge.html' %}{% endwith %}<time class="posttime">{{ post.get_time_string() }}</time></div>
+	</header>
+	<div class="postcontent panel-body">
 		{{ post.content|markdown }}
+		{% if post.image_url %}
+		<div class="post-media">
+			<img src="{{ post.image_url }}" alt="Image attached to {{ post.title }}" loading="lazy">
+		</div>
+		{% endif %}
+		{% if video_embed_url %}
+		<div class="post-media video-embed">
+			<iframe src="{{ video_embed_url }}" title="Video attached to {{ post.title }}"
+				loading="lazy" allow="accelerometer; autoplay; encrypted-media; picture-in-picture"
+				allowfullscreen></iframe>
+		</div>
+		{% endif %}
+		{% if current_user.is_authenticated and (current_user.id == post.user_id or current_user.admin) %}
+		<div class="management-actions post-management">
+			<a class="btn btn-default btn-sm" href="{{ url_for('posts.edit_post', post_id=post.id) }}">Edit post</a>
+			<form action="{{ url_for('posts.delete_post', post_id=post.id) }}" method="post" onsubmit="return confirm('Delete this post and all of its comments? This cannot be undone.');">
+				<button class="btn btn-danger btn-sm" type="submit">Delete post</button>
+			</form>
+		</div>
+		{% endif %}
 		<!-- Display the post's emoji reactions. -->
-<div class="post-reactions">
-    <h4>Reactions</h4>
+<div class="post-reactions" aria-label="Post reactions">
+    <h2>Reactions</h2>
 
     <!-- Everyone can see the reaction totals. -->
-    <p>
-        👍 Like: {{ reaction_counts["like"] }}
-        |
-        👎 Dislike: {{ reaction_counts["dislike"] }}
-        |
-        ❤️ Heart: {{ reaction_counts["heart"] }}
-    </p>
+    <div class="reaction-totals">
+        <span>👍 <b>{{ reaction_counts["like"] }}</b><span class="sr-only"> likes</span></span>
+        <span>👎 <b>{{ reaction_counts["dislike"] }}</b><span class="sr-only"> dislikes</span></span>
+        <span>❤️ <b>{{ reaction_counts["heart"] }}</b><span class="sr-only"> hearts</span></span>
+    </div>
 
     {% if current_user.is_authenticated %}
 
         <!-- Like button -->
-        <form action="/action_reaction" method="POST" style="display: inline;">
+        <form class="reaction-form" action="/action_reaction" method="POST">
             <input type="hidden" name="post_id" value="{{ post.id }}">
             <input type="hidden" name="reaction_type" value="like">
 
-            <button type="submit">
+            <button class="btn btn-default reaction-button{% if current_reaction == 'like' %} is-active{% endif %}" type="submit" aria-pressed="{{ 'true' if current_reaction == 'like' else 'false' }}">
                 👍 Like
                 {% if current_reaction == "like" %}
                     ✓
@@ -44,11 +56,11 @@
         </form>
 
         <!-- Dislike button -->
-        <form action="/action_reaction" method="POST" style="display: inline;">
+        <form class="reaction-form" action="/action_reaction" method="POST">
             <input type="hidden" name="post_id" value="{{ post.id }}">
             <input type="hidden" name="reaction_type" value="dislike">
 
-            <button type="submit">
+            <button class="btn btn-default reaction-button{% if current_reaction == 'dislike' %} is-active{% endif %}" type="submit" aria-pressed="{{ 'true' if current_reaction == 'dislike' else 'false' }}">
                 👎 Dislike
                 {% if current_reaction == "dislike" %}
                     ✓
@@ -57,11 +69,11 @@
         </form>
 
         <!-- Heart button -->
-        <form action="/action_reaction" method="POST" style="display: inline;">
+        <form class="reaction-form" action="/action_reaction" method="POST">
             <input type="hidden" name="post_id" value="{{ post.id }}">
             <input type="hidden" name="reaction_type" value="heart">
 
-            <button type="submit">
+            <button class="btn btn-default reaction-button{% if current_reaction == 'heart' %} is-active{% endif %}" type="submit" aria-pressed="{{ 'true' if current_reaction == 'heart' else 'false' }}">
                 ❤️ Heart
                 {% if current_reaction == "heart" %}
                     ✓
@@ -70,8 +82,7 @@
         </form>
 
         {% if current_reaction %}
-            <p>Your current reaction: {{ current_reaction }}</p>
-            <p>Click the same reaction again to remove it.</p>
+            <p class="reaction-help">Current reaction: {{ current_reaction }}. Select it again to remove it.</p>
         {% endif %}
 
     {% else %}
@@ -79,20 +90,19 @@
     {% endif %}
 </div>
 	</div>
-
-</div>
-<div class="addcomment" id="addcomment">
+</article>
+<div class="addcomment panel panel-default" id="addcomment">
+	<div class="panel-heading"><h2 class="panel-title">Add your comment</h2></div>
+	<div class="panel-body">
 	<form action="/action_comment?post={{ post.id }}" method="POST">
-		<textarea class="inputbox varwidth" rows="6" name="content"></textarea><br>
-		<input class="inputbox" style="margin-bottom: 1%;" type="submit" value="Comment">
+		<div class="form-group"><label class="sr-only" for="comment-content">Comment</label><textarea class="inputbox form-control" id="comment-content" rows="6" name="content" placeholder="Join the conversation…" required></textarea></div>
+		<input class="inputbox btn btn-primary" type="submit" value="Post comment">
 	</form>
+	</div>
 </div>
-<div style="text-align: center;">
-
-	
-
+<div class="comment-action">
 	{% if current_user.is_authenticated %}
-	<input type="button" id="displayaddcomment" onclick="toggle()" value="Add a comment">
+	<input class="btn btn-primary" type="button" id="displayaddcomment" onclick="toggle()" value="Add a comment">
 
 	{% else %}
 	<a href="/loginform">Login or register to make a comment</a>
@@ -100,22 +110,25 @@
 </div>
 {%if comments%}
 <div class="comments">
+<h2 class="comments-title">Comments <span class="badge">{{ comments.count() }}</span></h2>
 {% for comment in comments %}
-	
-	<div class="comment">
-		<div class="commentuser">
-			(<span  {% if comment.user.admin %} style="color: red;" {% endif %}>{{ comment.user.username }}</span>) - 
-		</div>
-		<div class="commentcontent">
+	<article class="comment card panel panel-default">
+		<header class="comment-header panel-heading">
+			{% with user=comment.user %}{% include '_user_badge.html' %}{% endwith %}
+			<time class="commenttime">{{ comment.get_time_string() }}</time>
+		</header>
+		<div class="commentcontent panel-body">
 			{{ comment.content }}
+			{% if current_user.is_authenticated and (current_user.id == comment.user_id or current_user.admin) %}
+			<div class="management-actions comment-management">
+				<a class="btn btn-default btn-xs" href="{{ url_for('comments.edit_comment', comment_id=comment.id) }}">Edit</a>
+				<form action="{{ url_for('comments.delete_comment', comment_id=comment.id) }}" method="post" onsubmit="return confirm('Delete this comment? This cannot be undone.');">
+					<button class="btn btn-danger btn-xs" type="submit">Delete</button>
+				</form>
+			</div>
+			{% endif %}
 		</div>
-		
-		<div class="commenttime">
-			{{ comment.get_time_string() }}
-		</div>
-	</div>
-	<br>
-	
+	</article>
 {% endfor %}
 </div>
 {% endif %}
@@ -136,4 +149,3 @@ function toggle(){
 
 
 {% endblock %}
-

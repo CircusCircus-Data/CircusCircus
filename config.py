@@ -22,14 +22,18 @@ class Config:
     SECRET_KEY = "kristofer"
     FLASK_APP = "forum.app"
 
-    # Build the MySQL connection without exposing the password.
-    SQLALCHEMY_DATABASE_URI = URL.create(
-        drivername="mysql+pymysql",
-        username=environ.get("DATABASE_USER"),
-        password=environ.get("DATABASE_PASSWORD"),
-        host=environ.get("DATABASE_HOST", "localhost"),
-        database=environ.get("DATABASE_NAME"),
-    )
+    # Use MySQL when its required settings are provided. Otherwise, keep local
+    # development self-contained with the SQLite database in instance/.
+    if environ.get("DATABASE_USER") and environ.get("DATABASE_NAME"):
+        SQLALCHEMY_DATABASE_URI = URL.create(
+            drivername="mysql+pymysql",
+            username=environ["DATABASE_USER"],
+            password=environ.get("DATABASE_PASSWORD"),
+            host=environ.get("DATABASE_HOST", "localhost"),
+            database=environ["DATABASE_NAME"],
+        )
+    else:
+        SQLALCHEMY_DATABASE_URI = "sqlite:///circuscircus.db"
 
     # Additional database settings
     SQLALCHEMY_ECHO = False
