@@ -30,6 +30,18 @@ class User(UserMixin, db.Model):
         backref="user",
         cascade="all, delete-orphan",
     )
+    profile_record = db.relationship(
+        "Profile",
+        backref="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    collection_items = db.relationship(
+        "CollectionItem",
+        backref="user",
+        cascade="all, delete-orphan",
+        order_by="CollectionItem.added_at.desc()",
+    )
 
     def __init__(self, email, username, password):
         self.email = email
@@ -208,6 +220,45 @@ class Reaction(db.Model):
 
     def __init__(self, reaction_type):
         self.reaction_type = reaction_type    
+
+
+class Profile(db.Model):
+    """Store the Sound Lab identity shown on a user's public profile."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False, unique=True)
+    display_name = db.Column(db.String(80))
+    bio = db.Column(db.Text)
+    location = db.Column(db.String(100))
+    instruments = db.Column(db.String(255))
+    favorite_genres = db.Column(db.String(255))
+    avatar_style = db.Column(db.String(20), nullable=False, default="synth")
+
+
+class CollectionItem(db.Model):
+    """Connect a Sound Lab user to an enriched MusicBrainz release."""
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    # Keep the original database column name for compatibility with local
+    # tables created during development; values are canonical release-group IDs.
+    musicbrainz_id = db.Column("musicbrainz_release_id", db.String(36), nullable=False)
+    artist_name = db.Column(db.String(255), nullable=False)
+    release_title = db.Column(db.String(255), nullable=False)
+    release_date = db.Column(db.String(20))
+    release_format = db.Column(db.String(80))
+    cover_url = db.Column(db.String(2048))
+    personal_note = db.Column(db.String(500))
+    favorite = db.Column(db.Boolean, nullable=False, default=False)
+    added_at = db.Column(db.DateTime, nullable=False, default=datetime.datetime.utcnow)
+
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id",
+            "musicbrainz_release_id",
+            name="unique_user_musicbrainz_release",
+        ),
+    )
 
 def error(errormessage):
 	return "<b style=\"color: red;\">" + errormessage + "</b>"

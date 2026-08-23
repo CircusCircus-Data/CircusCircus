@@ -4,6 +4,7 @@
 <nav class="rack-nav" aria-label="Primary navigation">
 	<a href="/"><span class="rack-icon">⌂</span><span>Forum</span><i></i></a>
 	{% if current_user.is_authenticated %}
+	<a href="/users/{{ current_user.username|urlencode }}"><span class="rack-icon">▣</span><span>Profile</span><i></i></a>
 	<a href="/messages/"><span class="rack-icon">▤</span><span>Messages</span><i></i></a>
 	<a href="/settings"><span class="rack-icon">◉</span><span>Settings</span><i></i></a>
 	<a href="/action_logout"><span class="rack-icon">↪</span><span>Log out</span><i></i></a>

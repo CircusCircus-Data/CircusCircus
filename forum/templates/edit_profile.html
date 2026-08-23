@@ -1,0 +1,26 @@
+{% extends 'layout.html' %}
+{% block title %}Edit profile / Sound Lab{% endblock %}
+{% block body %}
+<section class="profile-editor panel panel-default">
+	<div class="panel-heading"><span class="section-kicker">Identity module</span><h1 class="form-title">Edit musician profile</h1></div>
+	<div class="panel-body">
+		{% if errors %}<div class="alert alert-danger">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+		<form method="post">
+			<div class="form-group"><label for="display_name">Display name</label><input class="form-control" id="display_name" name="display_name" maxlength="80" value="{{ profile.display_name or '' }}"></div>
+			<div class="form-group"><label for="bio">Bio</label><textarea class="form-control" id="bio" name="bio" rows="6" maxlength="1000" placeholder="Tell the community what you make, play, collect, or listen for.">{{ profile.bio or '' }}</textarea></div>
+			<div class="row">
+				<div class="col-sm-4 form-group"><label for="location">Location</label><input class="form-control" id="location" name="location" maxlength="100" value="{{ profile.location or '' }}"></div>
+				<div class="col-sm-4 form-group"><label for="instruments">Instruments / roles</label><input class="form-control" id="instruments" name="instruments" maxlength="255" value="{{ profile.instruments or '' }}" placeholder="Bass, producer, vocalist"></div>
+				<div class="col-sm-4 form-group"><label for="favorite_genres">Favorite genres</label><input class="form-control" id="favorite_genres" name="favorite_genres" maxlength="255" value="{{ profile.favorite_genres or '' }}" placeholder="House, jazz, ambient"></div>
+			</div>
+			<fieldset class="avatar-picker"><legend>Choose your musician avatar</legend><div class="avatar-options">
+			{% for style, label in [('synth', 'Synth'), ('guitar', 'Guitar'), ('bass', 'Bass'), ('drums', 'Drums'), ('vocalist', 'Vocalist'), ('dj', 'DJ'), ('horns', 'Horns'), ('lyricist', 'Lyricist')] %}
+			<label class="avatar-option"><input type="radio" name="avatar_style" value="{{ style }}" {% if profile.avatar_style == style %}checked{% endif %}><span>{% with avatar_style=style %}{% include '_musician_avatar.html' %}{% endwith %}<b>{{ label }}</b></span></label>
+			{% endfor %}
+			</div></fieldset>
+			<button class="btn btn-primary btn-lg" type="submit">Save profile</button>
+			<a class="btn btn-default btn-lg" href="{{ url_for('profiles.profile', username=current_user.username) }}">Cancel</a>
+		</form>
+	</div>
+</section>
+{% endblock %}

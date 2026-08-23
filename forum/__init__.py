@@ -6,6 +6,7 @@ from forum.comments import comments_bp
 from forum.settings import settings_bp
 from forum.reactions import reactions_bp
 from forum.messages import messages_bp
+from forum.profiles import profiles_bp
 from forum.formatting import render_markdown
 
 def create_app():
@@ -27,6 +28,7 @@ def create_app():
     app.register_blueprint(settings_bp)
     app.register_blueprint(reactions_bp)
     app.register_blueprint(messages_bp)
+    app.register_blueprint(profiles_bp)
 
     # Connect the database to the application.
     from forum.models import db
