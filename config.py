@@ -19,7 +19,9 @@ class Config:
     """Store the settings used by the Flask application."""
 
     # General Flask settings
-    SECRET_KEY = "kristofer"
+    # Production and container deployments should supply their own secret.
+    # The fallback keeps the original local-development workflow working.
+    SECRET_KEY = environ.get("SECRET_KEY", "kristofer")
     FLASK_APP = "forum.app"
 
     # Use MySQL when its required settings are provided. Otherwise, keep local
