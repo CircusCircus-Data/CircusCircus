@@ -1,6 +1,8 @@
 services:
   db:
     image: mysql:8.4
+    ports:
+      - "${DB_PORT:-9302}:3306"
     environment:
       MYSQL_DATABASE: "${DATABASE_NAME:-circuscircus}"
       MYSQL_USER: "${DATABASE_USER:-circus_app}"
@@ -22,7 +24,7 @@ services:
     build:
       context: .
     ports:
-      - "${APP_PORT:-5001}:5000"
+      - "${APP_PORT:-9301}:5000"
     environment:
       SECRET_KEY: "${SECRET_KEY:-soundlab-local-development-only}"
       DATABASE_HOST: db

@@ -5,8 +5,9 @@
 Docker Compose runs two separate services on one private network:
 
 ```text
-Browser -> localhost:5001 -> web container -> db:3306 -> MySQL container
-                                      MySQL data -> mysql_data volume
+Browser -> localhost:9301 -> web container -> db:3306 -> MySQL container
+Database client -> localhost:9302 ----------------------^        |
+                                                MySQL data -> mysql_data volume
 ```
 
 - `web` is the SoundLab image built from the `Dockerfile`. Gunicorn serves the
@@ -15,7 +16,8 @@ Browser -> localhost:5001 -> web container -> db:3306 -> MySQL container
   `db` work as its hostname inside the Docker network.
 - `mysql_data` is a named volume. Containers can be replaced, while the MySQL
   files in this volume remain.
-- Port mapping publishes container port 5000 as `localhost:5001` on the Mac.
+- Port mappings publish the web app as `localhost:9301` and MySQL as
+  `localhost:9302` on the Mac.
 
 An **image** is the reusable package described by a Dockerfile. A **container**
 is a running instance of an image. A **volume** stores data independently of a
@@ -35,7 +37,7 @@ container. Compose records how all of these pieces run together.
    ```
 
 6. Wait until the logs show Gunicorn listening, then visit
-   <http://localhost:5001>.
+   <http://localhost:9301>.
 
 The first run downloads the base images and initializes MySQL, so it is slower.
 Later runs reuse cached image layers and the existing database volume.
@@ -91,8 +93,8 @@ that option only when an intentional clean reset is required.
 - **Docker command is missing:** start Docker Desktop and finish its first-run
   setup. If necessary, enable its command-line tool installation in Settings.
 - **Cannot connect to the Docker daemon:** Docker Desktop is not fully started.
-- **Port is already allocated:** change `APP_PORT` in `.env`, then recreate the
-  services. The URL must use the new port.
+- **Port is already allocated:** change `APP_PORT` or `DB_PORT` in `.env`, then
+  recreate the services. The app URL must use the configured `APP_PORT`.
 - **Database authentication fails after changing `.env`:** MySQL initialization
   variables only apply when the volume is empty. Restore the original values or,
   if the data is disposable, intentionally reset it with
@@ -106,6 +108,6 @@ The Dockerfile creates a reproducible Python 3.12 application image and starts
 Flask with Gunicorn. Compose runs that image beside an official MySQL 8.4 image.
 It passes database settings through environment variables, connects the services
 over a private network using `db` as the hostname, waits for MySQL to become
-healthy, publishes only the web service, and persists database files in a named
-volume. Secrets stay in an ignored local `.env` file rather than in Git or the
-application image.
+healthy, publishes the web app on port 9301 and MySQL on port 9302, and persists
+database files in a named volume. Secrets stay in an ignored local `.env` file
+rather than in Git or the application image.

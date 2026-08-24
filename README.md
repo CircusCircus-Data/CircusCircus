@@ -56,16 +56,17 @@ and then run this command from the project root:
 docker compose up --build
 ```
 
-Open <http://localhost:5001>. The first build installs the Python packages and
+Open <http://localhost:9301>. The first build installs the Python packages and
 downloads MySQL, so it can take a few minutes; later starts reuse Docker's
 cache. Compose runs two containers: `web` runs Flask through Gunicorn and `db`
 runs MySQL 8.4. Flask reaches MySQL at the hostname `db` on Compose's private
 network. The `mysql_data` Docker volume keeps the database when containers are
 recreated.
 
-The `APP_PORT` value in `.env` controls the Mac-side port. It defaults to 5001
-because macOS may reserve port 5000; Gunicorn still listens on port 5000 inside
-the container.
+The `APP_PORT` value in `.env` controls the Mac-side application port and
+defaults to 9301; Gunicorn still listens on port 5000 inside the container. The
+`DB_PORT` value publishes MySQL on port 9302 while MySQL continues to listen on
+port 3306 inside the container.
 
 Before starting, copy `.env.example` to `.env` and replace every placeholder.
 Compose reads this local file to configure both services, while `.gitignore`
