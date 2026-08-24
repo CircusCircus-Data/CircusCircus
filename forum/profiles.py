@@ -12,23 +12,43 @@ from forum.musicbrainz import MusicBrainzUnavailable, search_releases
 
 
 profiles_bp = Blueprint("profiles", __name__)
-STANDARD_AVATARS = (
+STARTER_AVATARS = (
+    ("starter-vocalist", "Vintage vocalist"),
+    ("starter-turntablist", "Turntable DJ"),
+    ("starter-controller", "Controller player"),
+    ("starter-beatmaker", "Beat maker"),
+)
+COLOR_AVATAR_TIERS = (
+    (10, (
     ("guitar", "Punk guitarist"), ("drums", "Drummer"),
     ("bass", "Bass player"), ("synth", "Synth player"),
     ("vocalist", "Vocalist"), ("dj", "DJ"),
     ("horns", "Horn player"), ("lyricist", "Lyricist"),
+    )),
+    (25, (
     ("guitar-alt", "Punk guitarist II"), ("drums-alt", "Drummer II"),
     ("bass-alt", "Bass player II"), ("synth-alt", "Synth player II"),
     ("vocalist-alt", "Vocalist II"), ("dj-alt", "DJ II"),
     ("horns-alt", "Horn player II"), ("lyricist-alt", "Lyricist II"),
+    )),
 )
 HEADLINER_AVATARS = {
-    "premium-synth": ("Synth engineer", 10),
-    "premium-vocalist": ("Spotlight vocalist", 25),
-    "premium-producer": ("Beat producer", 50),
-    "premium-percussion": ("Percussionist", 100),
+    "premium-synth": ("Synth engineer", 50),
+    "premium-vocalist": ("Spotlight vocalist", 100),
+    "premium-producer": ("Beat producer", 200),
+    "premium-percussion": ("Percussionist", 400),
 }
-AVATAR_STYLES = {style for style, _label in STANDARD_AVATARS} | set(HEADLINER_AVATARS)
+DEFAULT_AVATAR_STYLE = "starter-controller"
+AVATAR_THRESHOLDS = {
+    style: 0 for style, _label in STARTER_AVATARS
+}
+for threshold, avatars in COLOR_AVATAR_TIERS:
+    AVATAR_THRESHOLDS.update({style: threshold for style, _label in avatars})
+AVATAR_THRESHOLDS.update({
+    style: threshold
+    for style, (_label, threshold) in HEADLINER_AVATARS.items()
+})
+AVATAR_STYLES = set(AVATAR_THRESHOLDS)
 QUALIFYING_POST_MIN_CHARACTERS = 100
 QUALIFYING_POST_MIN_AGE = datetime.timedelta(hours=24)
 MBID_PATTERN = re.compile(r"^[0-9a-fA-F-]{36}$")
@@ -63,36 +83,59 @@ def qualifying_post_count(user, now=None):
 
 
 def _avatar_choices(post_count):
-    standard = [
-        {"style": style, "label": label, "premium": False, "unlocked": True}
-        for style, label in STANDARD_AVATARS
+    starters = [
+        {"style": style, "label": label, "threshold": 0, "unlocked": True}
+        for style, label in STARTER_AVATARS
     ]
-    premium = [
+    color_tiers = [
+        {
+            "threshold": threshold,
+            "avatars": [
+                {
+                    "style": style,
+                    "label": label,
+                    "threshold": threshold,
+                    "unlocked": post_count >= threshold,
+                }
+                for style, label in avatars
+            ],
+        }
+        for threshold, avatars in COLOR_AVATAR_TIERS
+    ]
+    headliners = [
         {
             "style": style,
             "label": label,
-            "premium": True,
             "threshold": threshold,
             "unlocked": post_count >= threshold,
         }
         for style, (label, threshold) in HEADLINER_AVATARS.items()
     ]
-    return standard, premium
+    return starters, color_tiers, headliners
 
 
 def _can_use_avatar(style, post_count):
-    if style not in AVATAR_STYLES:
-        return False
-    return style not in HEADLINER_AVATARS or post_count >= HEADLINER_AVATARS[style][1]
+    return style in AVATAR_THRESHOLDS and post_count >= AVATAR_THRESHOLDS[style]
 
 
 def _profile_for(user, create=False):
     if user.profile_record is None:
         if not create:
-            return Profile(avatar_style="synth")
-        user.profile_record = Profile(avatar_style="synth")
+            return Profile(avatar_style=DEFAULT_AVATAR_STYLE)
+        user.profile_record = Profile(avatar_style=DEFAULT_AVATAR_STYLE)
         db.session.flush()
     return user.profile_record
+
+
+def displayed_avatar_style(user, post_count=None):
+    """Return only an avatar the user has currently earned."""
+
+    profile = _profile_for(user)
+    count = qualifying_post_count(user) if post_count is None else post_count
+    return profile.avatar_style if _can_use_avatar(profile.avatar_style, count) else DEFAULT_AVATAR_STYLE
+
+
+profiles_bp.add_app_template_global(displayed_avatar_style)
 
 
 @profiles_bp.route("/users/<username>")
@@ -118,9 +161,7 @@ def profile(username):
             grouped_reactions[reaction.reaction_type].append(reaction)
 
     post_count = qualifying_post_count(user)
-    avatar_style = profile_record.avatar_style if (
-        _can_use_avatar(profile_record.avatar_style, post_count)
-    ) else "synth"
+    avatar_style = displayed_avatar_style(user, post_count=post_count)
     return render_template(
         "profile.html",
         profile_user=user,
@@ -137,14 +178,14 @@ def profile(username):
 def edit_profile():
     profile = _profile_for(current_user, create=True)
     post_count = qualifying_post_count(current_user)
-    standard_avatars, premium_avatars = _avatar_choices(post_count)
+    starter_avatars, color_avatar_tiers, headliner_avatars = _avatar_choices(post_count)
     if request.method == "POST":
-        avatar_style = request.form.get("avatar_style", "synth")
+        avatar_style = request.form.get("avatar_style", DEFAULT_AVATAR_STYLE)
         bio = request.form.get("bio", "").strip()
         if not _can_use_avatar(avatar_style, post_count) or len(bio) > 1000:
-            if avatar_style in HEADLINER_AVATARS:
-                required = HEADLINER_AVATARS[avatar_style][1]
-                error = f"That Headliner avatar requires {required} qualifying posts."
+            if avatar_style in AVATAR_THRESHOLDS:
+                required = AVATAR_THRESHOLDS[avatar_style]
+                error = f"That avatar requires {required} qualifying posts."
             else:
                 error = "Choose a valid avatar and keep your bio under 1,000 characters."
             return render_template(
@@ -152,8 +193,9 @@ def edit_profile():
                 profile=profile,
                 errors=[error],
                 qualifying_post_count=post_count,
-                standard_avatars=standard_avatars,
-                premium_avatars=premium_avatars,
+                starter_avatars=starter_avatars,
+                color_avatar_tiers=color_avatar_tiers,
+                headliner_avatars=headliner_avatars,
             ), 400
         profile.display_name = request.form.get("display_name", "").strip()[:80]
         profile.location = request.form.get("location", "").strip()[:100]
@@ -167,8 +209,9 @@ def edit_profile():
         "edit_profile.html",
         profile=profile,
         qualifying_post_count=post_count,
-        standard_avatars=standard_avatars,
-        premium_avatars=premium_avatars,
+        starter_avatars=starter_avatars,
+        color_avatar_tiers=color_avatar_tiers,
+        headliner_avatars=headliner_avatars,
     )
 
 

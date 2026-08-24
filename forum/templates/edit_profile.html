@@ -1,4 +1,15 @@
 {% extends 'layout.html' %}
+{% macro avatar_option(avatar, selected_style, qualifying_count, show_status=true) %}
+<label class="avatar-option{% if not avatar.unlocked %} is-locked{% endif %}" title="{{ avatar.label }}">
+	<input type="radio" name="avatar_style" value="{{ avatar.style }}" aria-label="{{ avatar.label }}"
+		{% if selected_style == avatar.style %}checked{% endif %}
+		{% if not avatar.unlocked %}disabled{% endif %}>
+	<span>
+		{% with avatar_style=avatar.style %}{% include '_musician_avatar.html' %}{% endwith %}
+		{% if show_status %}<small class="avatar-status">{% if avatar.unlocked %}🔓 Unlocked{% else %}🔒 {{ qualifying_count }}/{{ avatar.threshold }}{% endif %}</small>{% endif %}
+	</span>
+</label>
+{% endmacro %}
 {% block title %}Edit profile / Sound Lab{% endblock %}
 {% block body %}
 <section class="profile-editor panel panel-default">
@@ -13,16 +24,17 @@
 				<div class="col-sm-4 form-group"><label for="instruments">Instruments / roles</label><input class="form-control" id="instruments" name="instruments" maxlength="255" value="{{ profile.instruments or '' }}" placeholder="Bass, producer, vocalist"></div>
 				<div class="col-sm-4 form-group"><label for="favorite_genres">Favorite genres</label><input class="form-control" id="favorite_genres" name="favorite_genres" maxlength="255" value="{{ profile.favorite_genres or '' }}" placeholder="House, jazz, ambient"></div>
 			</div>
-			<fieldset class="avatar-picker"><legend>Choose your musician avatar</legend><div class="avatar-options">
-			{% for avatar in standard_avatars %}
-			<label class="avatar-option" title="{{ avatar.label }}"><input type="radio" name="avatar_style" value="{{ avatar.style }}" aria-label="{{ avatar.label }}" {% if profile.avatar_style == avatar.style %}checked{% endif %}><span>{% with avatar_style=avatar.style %}{% include '_musician_avatar.html' %}{% endwith %}</span></label>
-			{% endfor %}
+			<fieldset class="avatar-picker starter-picker"><legend>Starter avatars</legend><div class="avatar-options">
+			{% for avatar in starter_avatars %}{{ avatar_option(avatar, profile.avatar_style, qualifying_post_count, false) }}{% endfor %}
 			</div></fieldset>
+			{% for tier in color_avatar_tiers %}
+			<fieldset class="avatar-picker color-tier-picker"><legend>Color collection · {{ tier.threshold }} qualifying posts</legend><div class="avatar-options">
+			{% for avatar in tier.avatars %}{{ avatar_option(avatar, profile.avatar_style, qualifying_post_count) }}{% endfor %}
+			</div></fieldset>
+			{% endfor %}
 			<fieldset class="avatar-picker headliner-picker"><legend>SoundLab Headliners</legend>
 			<div class="avatar-options">
-			{% for avatar in premium_avatars %}
-			<label class="avatar-option{% if not avatar.unlocked %} is-locked{% endif %}" title="{{ avatar.label }}"><input type="radio" name="avatar_style" value="{{ avatar.style }}" aria-label="{{ avatar.label }}" {% if profile.avatar_style == avatar.style %}checked{% endif %} {% if not avatar.unlocked %}disabled{% endif %}><span>{% with avatar_style=avatar.style %}{% include '_musician_avatar.html' %}{% endwith %}<small class="avatar-status">{% if avatar.unlocked %}🔓 Unlocked{% else %}🔒 {{ qualifying_post_count }}/{{ avatar.threshold }}{% endif %}</small></span></label>
-			{% endfor %}
+			{% for avatar in headliner_avatars %}{{ avatar_option(avatar, profile.avatar_style, qualifying_post_count) }}{% endfor %}
 			</div>
 			<small class="headliner-note"><sup>*</sup> Public posts qualify after 24 hours when they contain at least 100 non-whitespace characters.</small>
 			</fieldset>

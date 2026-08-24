@@ -10,7 +10,12 @@ from flask_login import LoginManager
 from forum.formatting import render_markdown
 from forum.models import CollectionItem, Post, Profile, Reaction, Subforum, User, db
 from forum.musicbrainz import search_releases
-from forum.profiles import profiles_bp, qualifying_post_count
+from forum.profiles import (
+    AVATAR_THRESHOLDS,
+    displayed_avatar_style,
+    profiles_bp,
+    qualifying_post_count,
+)
 
 
 class ProfilesTests(unittest.TestCase):
@@ -50,10 +55,25 @@ class ProfilesTests(unittest.TestCase):
             session["_user_id"] = str(user_id or self.user_id)
             session["_fresh"] = True
 
+    def add_qualifying_posts(self, count):
+        now = datetime.datetime.now()
+        with self.app.app_context():
+            user = db.session.get(User, self.user_id)
+            start = Post.query.filter_by(user_id=user.id).count()
+            for number in range(count):
+                sequence = start + number
+                content = f"Original qualifying discussion number {sequence}. " * 4
+                user.posts.append(Post(
+                    f"Discussion {sequence}",
+                    content,
+                    now - datetime.timedelta(days=2),
+                ))
+            db.session.commit()
+
     def test_public_profile_uses_default_avatar_without_database_write(self):
         response = self.client.get("/users/soundartist")
         self.assertEqual(response.status_code, 200)
-        self.assertIn(b"avatar-synth", response.data)
+        self.assertIn(b"avatar-starter-controller", response.data)
         with self.app.app_context():
             self.assertEqual(Profile.query.filter_by(user_id=self.user_id).count(), 0)
 
@@ -67,14 +87,23 @@ class ProfilesTests(unittest.TestCase):
                 "location": "New York",
                 "instruments": "Synthesizer",
                 "favorite_genres": "House, ambient",
-                "avatar_style": "lyricist",
+                "avatar_style": "starter-vocalist",
             },
         )
         self.assertEqual(response.status_code, 302)
         with self.app.app_context():
             profile = Profile.query.filter_by(user_id=self.user_id).one()
             self.assertEqual(profile.display_name, "Sound Artist")
-            self.assertEqual(profile.avatar_style, "lyricist")
+            self.assertEqual(profile.avatar_style, "starter-vocalist")
+
+    def test_reward_thresholds_match_the_progression(self):
+        self.assertEqual(AVATAR_THRESHOLDS["starter-vocalist"], 0)
+        self.assertEqual(AVATAR_THRESHOLDS["guitar"], 10)
+        self.assertEqual(AVATAR_THRESHOLDS["guitar-alt"], 25)
+        self.assertEqual(AVATAR_THRESHOLDS["premium-synth"], 50)
+        self.assertEqual(AVATAR_THRESHOLDS["premium-vocalist"], 100)
+        self.assertEqual(AVATAR_THRESHOLDS["premium-producer"], 200)
+        self.assertEqual(AVATAR_THRESHOLDS["premium-percussion"], 400)
 
     def test_qualifying_posts_enforce_all_reward_rules(self):
         now = datetime.datetime.now()
@@ -104,24 +133,35 @@ class ProfilesTests(unittest.TestCase):
             data={"avatar_style": "premium-synth", "bio": ""},
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn(b"requires 10 qualifying posts", response.data)
+        self.assertIn(b"requires 50 qualifying posts", response.data)
         with self.app.app_context():
             profile = Profile.query.filter_by(user_id=self.user_id).first()
-            self.assertTrue(profile is None or profile.avatar_style == "synth")
+            self.assertTrue(profile is None or profile.avatar_style == "starter-controller")
+
+    def test_color_avatar_tiers_unlock_at_their_thresholds(self):
+        self.add_qualifying_posts(10)
+        self.login()
+        first_tier = self.client.post(
+            "/profile/edit",
+            data={"avatar_style": "guitar", "bio": ""},
+        )
+        self.assertEqual(first_tier.status_code, 302)
+        second_tier_locked = self.client.post(
+            "/profile/edit",
+            data={"avatar_style": "guitar-alt", "bio": ""},
+        )
+        self.assertEqual(second_tier_locked.status_code, 400)
+        self.assertIn(b"requires 25 qualifying posts", second_tier_locked.data)
+
+        self.add_qualifying_posts(15)
+        second_tier = self.client.post(
+            "/profile/edit",
+            data={"avatar_style": "guitar-alt", "bio": ""},
+        )
+        self.assertEqual(second_tier.status_code, 302)
 
     def test_headliner_avatar_unlocks_at_threshold(self):
-        now = datetime.datetime.now()
-        with self.app.app_context():
-            user = db.session.get(User, self.user_id)
-            for number in range(10):
-                content = (f"Original qualifying discussion number {number}. " * 4)
-                user.posts.append(Post(
-                    f"Discussion {number}",
-                    content,
-                    now - datetime.timedelta(days=2),
-                ))
-            db.session.commit()
-
+        self.add_qualifying_posts(50)
         self.login()
         response = self.client.post(
             "/profile/edit",
@@ -131,6 +171,13 @@ class ProfilesTests(unittest.TestCase):
         with self.app.app_context():
             profile = Profile.query.filter_by(user_id=self.user_id).one()
             self.assertEqual(profile.avatar_style, "premium-synth")
+
+    def test_display_falls_back_when_stored_avatar_is_not_earned(self):
+        with self.app.app_context():
+            user = db.session.get(User, self.user_id)
+            user.profile_record = Profile(avatar_style="premium-percussion")
+            db.session.commit()
+            self.assertEqual(displayed_avatar_style(user), "starter-controller")
 
     def test_collection_item_is_unique_and_owner_can_remove_it(self):
         self.login()

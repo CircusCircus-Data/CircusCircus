@@ -232,7 +232,7 @@ class Profile(db.Model):
     location = db.Column(db.String(100))
     instruments = db.Column(db.String(255))
     favorite_genres = db.Column(db.String(255))
-    avatar_style = db.Column(db.String(20), nullable=False, default="synth")
+    avatar_style = db.Column(db.String(30), nullable=False, default="starter-controller")
 
 
 class CollectionItem(db.Model):
