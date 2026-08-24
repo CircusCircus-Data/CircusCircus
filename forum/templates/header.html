@@ -11,7 +11,7 @@
 	<div class="header-account">
 		{% if current_user.is_authenticated %}
 		<a class="header-cta" href="/">+ Start a discussion</a>
-		<a class="account-chip" href="/settings"><span>{{ current_user.username[0]|upper }}</span>@{{ current_user.username }}</a>
+		<span class="account-chip">{% with user=current_user, size='tiny' %}{% include '_user_badge.html' %}{% endwith %}</span>
 		{% else %}
 		<a class="header-cta" href="/loginform">Join the frequency</a>
 		<span class="account-chip"><span>G</span>Guest</span>

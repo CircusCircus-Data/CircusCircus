@@ -1,0 +1,13 @@
+{% if displayed_avatar_style is defined %}
+	{% set badge_avatar = displayed_avatar_style(user) %}
+{% else %}
+	{% set badge_avatar = user.profile_record.avatar_style if user.profile_record else 'starter-controller' %}
+{% endif %}
+{% if linked|default(true) %}
+<a class="user-badge user-badge-{{ size|default('small') }}{% if user.admin %} admin-name{% endif %}" href="/users/{{ user.username|urlencode }}">
+{% else %}
+<span class="user-badge user-badge-{{ size|default('small') }}{% if user.admin %} admin-name{% endif %}">
+{% endif %}
+	{% with avatar_style=badge_avatar %}{% include '_musician_avatar.html' %}{% endwith %}
+	<span class="user-badge-name">@{{ user.username }}</span>
+{% if linked|default(true) %}</a>{% else %}</span>{% endif %}

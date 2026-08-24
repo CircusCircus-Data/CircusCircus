@@ -7,7 +7,7 @@ from flask import Flask
 from flask_login import LoginManager
 
 from forum.formatting import render_markdown
-from forum.models import Post, Subforum, User, db
+from forum.models import Post, Profile, Subforum, User, db
 from forum.posts import posts_bp
 
 
@@ -76,6 +76,17 @@ class PostVisibilityTests(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn(b"Public post content", response.data)
 
+    def test_post_author_badge_uses_saved_profile_avatar(self):
+        with self.app.app_context():
+            profile = Profile(user_id=self.user_id, avatar_style="lyricist")
+            db.session.add(profile)
+            db.session.commit()
+
+        response = self.client.get(f"/viewpost?post={self.public_post_id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn(b'class="user-badge user-badge-small', response.data)
+        self.assertIn(b"avatar-lyricist", response.data)
+        self.assertIn(b"@author", response.data)
     def test_private_post_direct_url_is_hidden_from_visitor(self):
         response = self.client.get(f"/viewpost?post={self.private_post_id}")
         self.assertEqual(response.status_code, 404)

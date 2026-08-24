@@ -1,0 +1,46 @@
+{% extends 'layout.html' %}
+{% macro avatar_option(avatar, selected_style, qualifying_count, show_status=true) %}
+<label class="avatar-option{% if not avatar.unlocked %} is-locked{% endif %}" title="{{ avatar.label }}">
+	<input type="radio" name="avatar_style" value="{{ avatar.style }}" aria-label="{{ avatar.label }}"
+		{% if selected_style == avatar.style %}checked{% endif %}
+		{% if not avatar.unlocked %}disabled{% endif %}>
+	<span>
+		{% with avatar_style=avatar.style %}{% include '_musician_avatar.html' %}{% endwith %}
+		{% if show_status %}<small class="avatar-status">{% if avatar.unlocked %}🔓 Unlocked{% else %}🔒 {{ qualifying_count }}/{{ avatar.threshold }}{% endif %}</small>{% endif %}
+	</span>
+</label>
+{% endmacro %}
+{% block title %}Edit profile / Sound Lab{% endblock %}
+{% block body %}
+<section class="profile-editor panel panel-default">
+	<div class="panel-heading"><span class="section-kicker">Identity module</span><h1 class="form-title">Edit musician profile</h1></div>
+	<div class="panel-body">
+		{% if errors %}<div class="alert alert-danger">{% for error in errors %}<p>{{ error }}</p>{% endfor %}</div>{% endif %}
+		<form method="post">
+			<div class="form-group"><label for="display_name">Display name</label><input class="form-control" id="display_name" name="display_name" maxlength="80" value="{{ profile.display_name or '' }}"></div>
+			<div class="form-group"><label for="bio">Bio</label><textarea class="form-control" id="bio" name="bio" rows="6" maxlength="1000" placeholder="Tell the community what you make, play, collect, or listen for.">{{ profile.bio or '' }}</textarea></div>
+			<div class="row">
+				<div class="col-sm-4 form-group"><label for="location">Location</label><input class="form-control" id="location" name="location" maxlength="100" value="{{ profile.location or '' }}"></div>
+				<div class="col-sm-4 form-group"><label for="instruments">Instruments / roles</label><input class="form-control" id="instruments" name="instruments" maxlength="255" value="{{ profile.instruments or '' }}" placeholder="Bass, producer, vocalist"></div>
+				<div class="col-sm-4 form-group"><label for="favorite_genres">Favorite genres</label><input class="form-control" id="favorite_genres" name="favorite_genres" maxlength="255" value="{{ profile.favorite_genres or '' }}" placeholder="House, jazz, ambient"></div>
+			</div>
+			<fieldset class="avatar-picker starter-picker"><legend>Starter avatars</legend><div class="avatar-options">
+			{% for avatar in starter_avatars %}{{ avatar_option(avatar, profile.avatar_style, qualifying_post_count, false) }}{% endfor %}
+			</div></fieldset>
+			{% for tier in color_avatar_tiers %}
+			<fieldset class="avatar-picker color-tier-picker"><legend>Color collection · {{ tier.threshold }} qualifying posts</legend><div class="avatar-options">
+			{% for avatar in tier.avatars %}{{ avatar_option(avatar, profile.avatar_style, qualifying_post_count) }}{% endfor %}
+			</div></fieldset>
+			{% endfor %}
+			<fieldset class="avatar-picker headliner-picker"><legend>SoundLab Headliners</legend>
+			<div class="avatar-options">
+			{% for avatar in headliner_avatars %}{{ avatar_option(avatar, profile.avatar_style, qualifying_post_count) }}{% endfor %}
+			</div>
+			<small class="headliner-note"><sup>*</sup> Public posts qualify after 24 hours when they contain at least 100 non-whitespace characters.</small>
+			</fieldset>
+			<button class="btn btn-primary btn-lg" type="submit">Save profile</button>
+			<a class="btn btn-default btn-lg" href="{{ url_for('profiles.profile', username=current_user.username) }}">Cancel</a>
+		</form>
+	</div>
+</section>
+{% endblock %}

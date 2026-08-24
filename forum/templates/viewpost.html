@@ -5,7 +5,7 @@
 <article class="actualpost card panel panel-default">
 	<header class="actualposttitle panel-heading">
 		<a href="/viewpost?post={{ post.id }}">{{post.title}}</a>
-		<div class="post-meta"><span class="postposter {% if post.user.admin %}admin-name{% endif %}">@{{ post.user.username }}</span><time class="posttime">{{ post.get_time_string() }}</time></div>
+		<div class="post-meta">{% with user=post.user %}{% include '_user_badge.html' %}{% endwith %}<time class="posttime">{{ post.get_time_string() }}</time></div>
 	</header>
 	<div class="postcontent panel-body">
 		{{ post.content|markdown }}
@@ -114,7 +114,7 @@
 {% for comment in comments %}
 	<article class="comment card panel panel-default">
 		<header class="comment-header panel-heading">
-			<span class="commentuser {% if comment.user.admin %}admin-name{% endif %}">@{{ comment.user.username }}</span>
+			{% with user=comment.user %}{% include '_user_badge.html' %}{% endwith %}
 			<time class="commenttime">{{ comment.get_time_string() }}</time>
 		</header>
 		<div class="commentcontent panel-body">

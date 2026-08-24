@@ -1,0 +1,36 @@
+{% extends 'layout.html' %}
+{% block title %}Add music / Sound Lab{% endblock %}
+{% block body %}
+<section class="collection-search-head">
+	<span class="section-kicker">MusicBrainz catalog link</span>
+	<h1>Find a release.</h1>
+	<p>Search by artist or album title, then add a release to your Sound Lab shelf. Artist matches are prioritized and duplicate editions are grouped.</p>
+	<form class="collection-search-form" method="get">
+		<label class="sr-only" for="collection-query">Search MusicBrainz</label>
+		<input class="form-control" id="collection-query" name="q" value="{{ query }}" minlength="2" required placeholder="Try: Alice Coltrane Journey in Satchidananda">
+		<button class="btn btn-primary" type="submit">Search catalog</button>
+	</form>
+</section>
+{% if search_error %}<div class="alert alert-danger" role="alert">{{ search_error }} Please try again shortly.</div>{% endif %}
+{% if query and not search_error %}
+<div class="search-result-heading"><h2>Results for “{{ query }}”</h2><span>Page {{ page }} · {{ results|length }} releases</span></div>
+{% endif %}
+{% if results %}<div class="musicbrainz-results">
+	{% for result in results %}
+	<article class="catalog-release">
+		<div class="catalog-cover"><div class="cover-fallback" aria-hidden="true"><i></i><span>MB</span></div><img src="{{ result.cover_url }}" alt="" loading="lazy" onerror="this.style.display='none'"></div>
+		<div class="catalog-info"><span>{{ result.format or 'Release' }}{% if result.country %} / {{ result.country }}{% endif %}</span><h3>{{ result.title }}</h3><p>{{ result.artist }}{% if result.date %} · {{ result.date }}{% endif %}</p></div>
+		<form action="{{ url_for('profiles.add_collection_item') }}" method="post">
+			<input type="hidden" name="release_id" value="{{ result.id }}"><input type="hidden" name="title" value="{{ result.title }}"><input type="hidden" name="artist" value="{{ result.artist }}"><input type="hidden" name="date" value="{{ result.date }}"><input type="hidden" name="format" value="{{ result.format }}">
+			<button class="btn btn-primary" type="submit">+ Add to shelf</button>
+		</form>
+		<a class="catalog-source" href="{{ result.musicbrainz_url }}" target="_blank" rel="noopener">Data provided by MusicBrainz ↗</a>
+	</article>
+	{% endfor %}
+</div>
+<nav class="catalog-pagination" aria-label="Collection search pages">
+	{% if page > 1 %}<a class="btn btn-default" href="{{ url_for('profiles.collection_search', q=query, page=page-1) }}">← Previous</a>{% endif %}
+	{% if has_next %}<a class="btn btn-default" href="{{ url_for('profiles.collection_search', q=query, page=page+1) }}">Next results →</a>{% endif %}
+</nav>
+{% elif query and not search_error %}<div class="alert alert-info">No releases matched that search. Try fewer or more specific terms.</div>{% endif %}
+{% endblock %}
