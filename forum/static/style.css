@@ -2045,6 +2045,10 @@ select:focus{
 	gap: .3rem;
 }
 .avatar-guitar{ background-image: url("images/avatars/guitar.png"); }
+.avatar-starter-vocalist{ background-image: url("images/avatars/starter-vocalist.png"); }
+.avatar-starter-turntablist{ background-image: url("images/avatars/starter-turntablist.png"); }
+.avatar-starter-controller{ background-image: url("images/avatars/starter-controller.png"); }
+.avatar-starter-beatmaker{ background-image: url("images/avatars/starter-beatmaker.png"); }
 .avatar-drums{ background-image: url("images/avatars/drums.png"); }
 .avatar-bass{ background-image: url("images/avatars/bass.png"); }
 .avatar-synth{ background-image: url("images/avatars/synth.png"); }
